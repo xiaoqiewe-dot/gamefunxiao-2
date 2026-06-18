@@ -1,0 +1,253 @@
+# GameFunXiao 主配置文件
+# 配置版本（请勿手动修改）
+config_version: 7
+
+# GameFun消息前缀
+prefix: "§x§5§5§F§F§A§A⚔ §x§6§6§F§F§B§BGameFun §x§7§7§F§F§C§C>> §f"
+# 猎人游戏消息前缀
+hunter_game_prefix: "§x§F§F§6§6§0§0⚔ §x§F§F§9§9§3§3猎§x§F§F§C§C§6§6人§x§F§F§F§F§9§9游§x§C§C§F§F§9§9戏 §x§F§F§6§6§0§0» §f"
+# 小游戏总前缀
+minigame_prefix: "§x§7§D§F§F§C§8✦ §x§9§3§F§F§D§6小§x§A§9§F§F§E§4游§x§B§F§F§F§F§2戏 §x§7§D§F§F§C§8» §f"
+# 幸运之柱独立消息前缀
+lucky_pillars_prefix: "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱 §x§F§F§D§D§5§5» §f"
+
+header-footer:
+  enabled: true
+  # 只在这个代理服名上应用，避免影响 gamefun 大厅服
+  target_server: "gameing"
+  header:
+    - '                                       '
+    - '<gradient:#B988F9:#B988F9><b> QI YUAN </b></gradient>'
+    - '<gradient:#F0A9BB:#F0A9BB>很荣幸您能</gradient><gradient:#F0A9BB:#F0A9BB>来</gradient>'
+    - ''
+  footer:
+    - ''
+    - '<gradient:#913DFF:#913DFF>§x§f§6§e§1§3§b§lの §r§x§f§6§e§1§3§b当前服务器 §r§8: §r%qichengmorebungeeapi_server%§r §x§f§6§e§1§3§b§lの'
+    - '§r<gradient:#D2A6F4:#D2A6F4><b>></b> 服务器QQ群 : 1076620337 <b><<b/></gradient>'
+    - '§r<gradient:#ADBBC5:#B988F9>mcqi.top</gradient>'
+    - ''
+
+# 菜单设置
+menu:
+  # 是否在菜单标题后显示版本号
+  show_version: true
+  # 版本号
+  version: "v1.0.1"
+  # 关闭按钮设置
+  close_button:
+    # 是否把关闭按钮显示成返回服务器主菜单按钮
+    display_as_return_button: false
+    # 点击返回按钮后执行的玩家命令（不要带/）
+    return_command: "menu"
+
+# 猎人游戏设置
+hunter_game:
+  # 房间后端模式：cross_server=跨服传送到固定小游戏服创建，current_server_world=在当前服务器创建世界，child_server=启动独立子服房间
+  room_backend: "cross_server"
+  cross_server:
+    # 是否启用固定小游戏服传送；关闭时不会把玩家传到 gameing，会自动在当前服务器开房间
+    enabled: true
+    # 玩家创建/加入房间时要送去的代理服 server 名
+    game_server_name: "gameing"
+    # 游戏结束或退出后返回的大厅服 server 名
+    lobby_server_name: "gamefun"
+    # 跨服创建房间的临时请求目录（大厅服和游戏服都要能访问到）
+    request_path: "D:/plus/GameFunShared/cross-create-requests"
+    # gamefun 与 gameing 共用的玩家数据根目录（留空时会自动取 request_path 的上级目录）
+    shared_playerdata_root: "D:/plus/GameFunShared"
+    # 在 gameing 小游戏服宣传房间时，是否把宣传消息转发到 gamefun 大厅服
+    forward_advertise_to_lobby: true
+  performance:
+    # 选择世界阶段预热区块半径（按区块计算，越大越顺滑，但创建世界瞬时压力越高）
+    preload_radius: 2
+    # 每轮同时请求的异步区块预热数量
+    preload_parallel_tasks: 2
+    # 是否启用懒加载维度（普通模式不在开局立即创建下界/末地，而是在首次需要时再创建）
+    lazy_dimension_creation: true
+  # 最少开始人数
+  min_players: 2
+  # 等待倒计时（秒）
+  wait_countdown: 300
+  # 世界选择时间（秒）
+  world_selection_time: 120
+  # 下界篇猎人落点投票时间（秒）
+  nether_hunter_vote_time: 45
+  # 闪光模式第二轮猎物投票的保底展示时长（秒）
+  flash_mode:
+    second_vote_seconds: 20
+    # 音符盒真实谱源曲库：不再内置假谱。想要完全像原曲，请把 .mid/.midi/.nbs/.txt 谱源放进 plugins/GameFunXiao/flash-note-songs
+    note_block_melodies:
+      enabled: true
+      install_bundled_songs: true
+      scan_files: true
+      scan_subfolders: true
+      source_folder: "flash-note-songs"
+      # 缓存刷新间隔，放新谱后最多等这个时间生效
+      reload_interval_ms: 5000
+      # 超过这个音符数量的谱会作为长谱大招
+      long_min_notes: 48
+      # 单首最多读取多少个音，必须和内部缓存上限保持一致
+      max_notes_per_song: 220
+      # 长谱会额外自动截取一段短谱攻击，避免曲库里全是全章大招
+      auto_short_attacks: true
+      short_attack_min_notes: 8
+      short_attack_max_notes: 16
+      # 也可以直接在这里写谱；tones 是音符盒档位 0~24，source 支持 .mid/.midi/.nbs/.txt
+      songs: {}
+  # 末地篇正式开局倒计时（秒）
+  end_chapter_pre_start_countdown: 10
+  # 存活模式时间（分钟）
+  survival_time: 30
+  # 管理员强制开始模式：direct=跳至10秒倒计时, skip_to_1min=跳至1分钟倒计时
+  force_start_mode: "direct"
+  # 1v1时猎人退出是否扣分
+  one_vs_one_quit_penalty: true
+
+  # 聊天设置
+  chat:
+    # 是否隔离房间聊天（等待、倒计时、选择世界、游戏中都会只发给同房间玩家）
+    isolate_room_chat: true
+    # 兼容旧配置：是否隔离游戏世界聊天
+    isolate_game_chat: true
+    # 是否通知旁观者加入
+    notify_spectator_join: true
+    # 管理员旁观是否通知
+    admin_spectate_notify: false
+
+  # 奖励设置
+  rewards:
+    # 猎物失败奖励（游戏结束后发放）
+    fail_reward: 25
+
+  # PvP 设置
+  pvp:
+    # 猎人攻击猎人是否造成伤害（true=会掉血, false=不会掉血但还是能攻击）
+    hunter_friendly_fire: false
+
+# 游戏中禁用的命令（通用）
+disabled_commands:
+  # 是否启用命令禁用功能
+  enabled: true
+  # 禁用的命令列表（不需要加/）
+  commands:
+    - "spawn"
+    - "home"
+    - "sethome"
+    - "tpa"
+    - "tpahere"
+    - "back"
+    - "warp"
+    - "rtp"
+# 尝试使用禁用命令时的提示消息
+  blocked_message: "§x§F§F§8§8§5§5⚠ §c游戏进行中无法使用此命令！"
+
+# 小游戏货币设置（由 GameFun 插件存储，gamefun/gameing 通过共享玩家数据互通）
+minigame_currency:
+  name: "小游戏币"
+
+shop:
+  hunter_victory_effects:
+    fireworks:
+      name: "默认烟花"
+      price: 0
+      lore:
+        - "§f- §a经典烟花庆祝，默认拥有"
+        - "§f- §b适合所有猎人收尾场面"
+    black_hole:
+      name: "黑洞"
+      price: 1200
+      lore:
+        - "§f- §8生成巨大的黑色核心"
+        - "§f- §d周围粒子会被吸入中心"
+    star_rain:
+      name: "星雨"
+      price: 900
+      lore:
+        - "§f- §b天空降下星光雨"
+        - "§f- §d末地感很强的胜利收束"
+    dragon_breath_bloom:
+      name: "龙息绽放"
+      price: 1000
+      lore:
+        - "§f- §d龙息环形爆开"
+        - "§f- §5像击败巨龙后的能量花"
+    thunder_crown:
+      name: "雷霆王冠"
+      price: 1100
+      lore:
+        - "§f- §e雷光围成王冠"
+        - "§f- §6适合强势终结猎物"
+    soul_vortex:
+      name: "灵魂漩涡"
+      price: 950
+      lore:
+        - "§f- §3灵魂火焰旋转升起"
+        - "§f- §b幽蓝粒子包围战场"
+    aurora_spiral:
+      name: "极光螺旋"
+      price: 880
+      lore:
+        - "§f- §b青紫极光向上盘旋"
+        - "§f- §d柔和但很显眼的结算特效"
+    crystal_bloom:
+      name: "晶簇绽放"
+      price: 760
+      lore:
+        - "§f- §d紫晶光点向四周绽放"
+        - "§f- §f干净、亮眼、不遮视野"
+
+# 自定义金币设置
+custom_currency:
+  enabled: false
+  name: "金币"
+  # 扣除金币命令 (%player% 玩家名, %amount% 金币数)
+  take_command: "/eco take %player% %amount%"
+  # 给予金币命令
+  give_command: "/eco give %player% %amount%"
+  # 当前金币变量（PlaceholderAPI）
+  balance_placeholder: "%vault_eco_balance%"
+
+# 等待大厅可交互区域
+# 用于在等待大厅世界里放行指定区域的告示牌、展示框、展示实体等交互。
+lobby_interaction_regions:
+  enabled: true
+  regions: {}
+
+# 子服设置
+child_server:
+  # 是否启用子服模式
+  enabled: false
+  # 当前服务器角色：standalone=单服原模式，lobby=大厅控制服，node=对子服节点
+  role: "standalone"
+  # 子服结束后返回的大厅服名（代理服里的 server 名）
+  lobby_server_name: "gamefun"
+
+  shared_storage:
+    # 房间注册信息目录（大厅服和子服都要能访问到）
+    room_registry_path: "D:/plus/GameFunShared/room-registry"
+    # 玩家跨服暂存数据目录（大厅服和子服都要能访问到）
+    playerdata_root: "D:/plus/GameFunShared"
+
+  lobby:
+    # 子服最长启动等待时间（秒）
+    start_timeout_seconds: 60
+    # 可用子服节点列表（这些 server 名需要提前写进代理服配置）
+    nodes:
+      node-1:
+        proxy_server_name: "gamefun-node-1"
+        host: "127.0.0.1"
+        port: 25580
+        # 子服模板目录
+        template_dir: "D:/plus/Plu/ZJ plu/gamefun-node-template"
+        # 子服运行时根目录（会自动创建按房间分开的实例目录）
+        runtime_root: "D:/plus/Plu/ZJ plu/gamefun-generated"
+        # Java 启动命令
+        java_command: "java"
+        # 模板目录里的服务端 jar 文件名
+        server_jar: "leavesclip.jar"
+        # 自定义 JVM 参数
+        jvm_args:
+          - "-Xms1G"
+          - "-Xmx1G"
+        # 如果你想完全自定义启动命令，就填这里；留空则使用上面的 java_command + server_jar
+        startup_command: ""

@@ -1,0 +1,64 @@
+# GameFunXiao 记分板配置
+config_version: 1
+
+enabled: true
+
+# 记分板标题
+title: "§x§F§F§6§6§0§0⚔ §x§F§F§A§A§5§5猎人游戏"
+
+# 是否显示右侧数字，默认开启
+show_right_numbers: true
+
+compatibility:
+  # 如果 TAB、AnimatedScoreboard 等插件正在占用侧边栏，则不硬抢，避免一闪一闪
+  # 如果你想 GameFun 强制显示侧边栏，可以改成 false，并关闭其他侧边栏插件
+  respect_foreign_sidebar: true
+
+lines:
+  waiting:
+    - "§7"
+    - "§f当前人数: §a{current_players}§7/§e{max_players}"
+    - "§f游戏模式: §b{mode}"
+    - "§f房间号: §d{room_id}"
+    - "§7"
+    - "§f房间状态: §x§5§5§F§F§A§A{state}"
+    - "§f倒计时: §e{countdown}"
+    - "§7"
+    - "§8HunterGame.server"
+  selecting:
+    - "§7"
+    - "§f游戏模式: §b{mode}"
+    - "§f猎物: §a{prey_names}"
+    - "§f阶段: §d选择世界"
+    - "§f剩余时间: §e{countdown}"
+    - "§7"
+    - "§8HunterGame.server"
+  playing:
+    - "§7"
+    - "§f游戏模式: §b{mode}"
+    - "§f猎物: §a{prey_names}"
+    - "§f猎人: §c{hunter_count}人"
+    - "§f已进行: §e{elapsed_time}"
+    - "{end_flash_command_hint}"
+    - "§7"
+    - "§e§l追踪排行"
+    - "{rank_1}"
+    - "{rank_2}"
+    - "{rank_3}"
+    - "§7"
+    - "§8HunterGame.server"
+  swap_countdown:
+    - "§7"
+    - "§f游戏模式: §b{mode}"
+    - "§f状态: §8暗处待命"
+    - "§f接管倒计时: §e{swap_countdown}"
+    - "§f当前接力: §a{active_swap_prey}"
+    - "§7"
+    - "§8HunterGame.server"
+  ended:
+    - "§7"
+    - "§f游戏模式: §b{mode}"
+    - "§f游戏结果: {winner}"
+    - "§f游戏时长: §e{elapsed_time}"
+    - "§7"
+    - "§8HunterGame.server"

@@ -1,0 +1,110 @@
+config_version: 3
+
+size_profiles:
+  lucky_pillars:
+    small:
+      display_name: "小型地图"
+      max_players: 8
+      player_spacing: 15.0
+      boundary_radius: 52.0
+    middle:
+      display_name: "中型地图"
+      max_players: 16
+      player_spacing: 18.0
+      boundary_radius: 66.0
+    large:
+      display_name: "大型地图"
+      max_players: 32
+      player_spacing: 22.0
+      boundary_radius: 96.0
+active_maps:
+  lucky_pillars: random
+maps:
+  lucky_pillars:
+    small:
+      display_name: "羊毛圆盘"
+      enabled: true
+      min_players: 2
+      max_players: 8
+      theme: "WOOL"
+      lobby_template_world: "gamefun_template_lucky_pillars_small_lobby"
+      game_template_world: "gamefun_template_lucky_pillars_small_game"
+      auto_create_template: true
+      lobby_spawn:
+        world: "gamefun_template_lucky_pillars_small_lobby"
+        x: 0.5
+        y: 65.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+      arena_center:
+        world: "gamefun_template_lucky_pillars_small_game"
+        x: 0.5
+        y: 149.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 10.0
+      elimination_y: 120
+      boundary_radius: 52.0
+      game_time_seconds: 480
+      random_item_interval_seconds: 5
+      random_event_interval_seconds: 30
+      game_spawns: []
+    middle:
+      display_name: "虚空圆盘"
+      enabled: true
+      min_players: 9
+      max_players: 16
+      theme: "VOID"
+      lobby_template_world: "gamefun_template_lucky_pillars_middle_lobby"
+      game_template_world: "gamefun_template_lucky_pillars_middle_game"
+      auto_create_template: true
+      lobby_spawn:
+        world: "gamefun_template_lucky_pillars_middle_lobby"
+        x: 0.5
+        y: 65.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+      arena_center:
+        world: "gamefun_template_lucky_pillars_middle_game"
+        x: 0.5
+        y: 149.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 10.0
+      elimination_y: 120
+      boundary_radius: 66.0
+      game_time_seconds: 480
+      random_item_interval_seconds: 5
+      random_event_interval_seconds: 30
+      game_spawns: []
+    large:
+      display_name: "海洋圆盘"
+      enabled: true
+      min_players: 17
+      max_players: 32
+      theme: "OCEAN"
+      lobby_template_world: "gamefun_template_lucky_pillars_large_lobby"
+      game_template_world: "gamefun_template_lucky_pillars_large_game"
+      auto_create_template: true
+      lobby_spawn:
+        world: "gamefun_template_lucky_pillars_large_lobby"
+        x: 0.5
+        y: 65.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 0.0
+      arena_center:
+        world: "gamefun_template_lucky_pillars_large_game"
+        x: 0.5
+        y: 149.0
+        z: 0.5
+        yaw: 0.0
+        pitch: 10.0
+      elimination_y: 120
+      boundary_radius: 96.0
+      game_time_seconds: 480
+      random_item_interval_seconds: 5
+      random_event_interval_seconds: 30
+      game_spawns: []

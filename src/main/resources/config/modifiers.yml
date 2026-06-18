@@ -1,0 +1,84 @@
+# 修饰符配置
+# 配置版本（请勿手动修改）
+config_version: 2
+
+modifiers:
+  ThunderStorm:
+    display_name: "雷魔修饰符"
+    description: "全世界处于雷暴天，被雨淋会减速，攻击触发雷击"
+    icon: LIGHTNING_ROD
+    effects:
+      - constant_thunder
+      - rain_slowness
+      - attack_lightning
+
+  RewardChest:
+    display_name: "奖励箱修饰符"
+    description: "开局获得指向奖励箱的指南针"
+    icon: CHEST
+    effects:
+      - spawn_reward_chest
+      - give_chest_compass
+
+  NoWorld:
+    display_name: "无世界修饰符"
+    description: "猎物无法选择世界，直接使用随机世界"
+    icon: BEDROCK
+    effects:
+      - skip_world_selection
+
+  NoYChange:
+    display_name: "禁止Y轴移动修饰符"
+    description: "猎物在选择世界时不能上下移动"
+    icon: ELYTRA
+    effects:
+      - block_y_movement
+
+  YesHunterSee:
+    display_name: "猎人视野修饰符"
+    description: "猎人开局不会获得致盲效果"
+    icon: ENDER_EYE
+    effects:
+      - no_hunter_blindness
+
+  NoLocatorBar:
+    display_name: "关闭定位条修饰符"
+    description: "关闭原版定位条，猎人和猎物都不会显示定位条"
+    icon: SPYGLASS
+    effects:
+      - disable_locator_bar
+
+  IncludeY:
+    display_name: "Y轴追踪修饰符"
+    description: "启用后指南针与排行都不会计算Y轴距离"
+    icon: COMPASS
+    effects:
+      - compass_include_y
+
+  HunterDropItems:
+    display_name: "猎人掉落修饰符"
+    description: "猎人死亡时会掉落装备"
+    icon: CHEST_MINECART
+    effects:
+      - hunter_drop_on_death
+
+  PreyRespawn:
+    display_name: "猎物复活修饰符"
+    description: "猎物死亡后可复活一次，保留装备"
+    icon: TOTEM_OF_UNDYING
+    effects:
+      - prey_respawn
+
+  HunterTPOnDeath:
+    display_name: "猎人死亡TP修饰符"
+    description: "猎人复活后必须选一位队友TP，且5分钟内不能拿队友物品"
+    icon: ENDER_PEARL
+    effects:
+      - hunter_tp_on_death
+
+  InfiniteTP:
+    display_name: "削减TP时间修饰符"
+    description: "指南针的TP冷却时间减少为1分钟"
+    icon: CHORUS_FRUIT
+    effects:
+      - tp_cooldown_60s
