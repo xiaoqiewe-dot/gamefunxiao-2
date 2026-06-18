@@ -943,6 +943,9 @@ public class PlayerListener implements Listener {
     }
 
     private boolean handleGameItem(Player player, GameRoom room, Material type, int modelData) {
+        if (room.getGameMode().isBrickGuard()) {
+            return plugin.getBrickGuardManager().handleGameItem(player, room, player.getInventory().getItemInMainHand(), type, modelData);
+        }
         // 开始游戏按钮
         if (modelData == 10007 && room.isPrey(player.getUniqueId())) {
             plugin.getGameManager().triggerGameStart(room, player);
@@ -1054,6 +1057,11 @@ public class PlayerListener implements Listener {
             return;
         }
 
+        if (room.getGameMode().isBrickGuard() && plugin.getBrickGuardManager().handleDropItem(room, player, item)) {
+            event.setCancelled(true);
+            return;
+        }
+
         // 旁观者退出物品（扔出即退出）
         if (room.isSpectator(player.getUniqueId())) {
             int modelData = 0;
@@ -1158,6 +1166,10 @@ public class PlayerListener implements Listener {
     public void onPlayerItemConsume(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
         ItemStack item = event.getItem();
+        GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
+        if (room != null && plugin.getBrickGuardManager().handleItemConsume(player, room, item)) {
+            return;
+        }
         if (item == null || item.getType() != Material.RECOVERY_COMPASS) {
             return;
         }
@@ -1171,7 +1183,7 @@ public class PlayerListener implements Listener {
         }
 
         stopRandomCompassEating(player);
-        GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
+        room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
         if (room != null) {
             plugin.getGameManager().consumeRandomCompass(player, room);
         }
@@ -1200,6 +1212,10 @@ public class PlayerListener implements Listener {
         Player player = event.getPlayer();
         GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
         if (room == null) return;
+
+        if (plugin.getBrickGuardManager().handleRespawn(event, player, room)) {
+            return;
+        }
 
         // 检查是否有待复活位置（猎物死亡时设置的）
         org.bukkit.Location pendingLoc = room.getPendingRespawnLocation(player.getUniqueId());
@@ -1303,6 +1319,10 @@ public class PlayerListener implements Listener {
 
         if (room.getGameMode() == GameMode.END_FLASH) {
             handleEndFlashDeath(event, player, room);
+            return;
+        }
+
+        if (plugin.getBrickGuardManager().handleDeath(event, player, room)) {
             return;
         }
 
@@ -1885,6 +1905,9 @@ public class PlayerListener implements Listener {
         GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
 
         if (room != null) {
+            if (room.getGameMode().isBrickGuard() && plugin.getBrickGuardManager().handleAsyncChat(event, player, room)) {
+                return;
+            }
             if (isFlashTournamentStartedRoom(room)) {
                 event.setCancelled(true);
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -1993,6 +2016,9 @@ public class PlayerListener implements Listener {
         if (plugin.getGameManager().handleLuckyPillarBreak(event, player, room)) {
             return;
         }
+        if (plugin.getBrickGuardManager().handleBlockBreak(event, player, room)) {
+            return;
+        }
 
         if (room != null && room.getState() == RoomState.PLAYING && room.getGameMode().isStandaloneMiniGame()) {
             cancelBlockBreakAndResync(event, player);
@@ -2020,6 +2046,10 @@ public class PlayerListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Player player = event.getPlayer();
         GameRoom room = resolveManagedRoom(player, event.getBlockPlaced().getWorld());
+
+        if (plugin.getBrickGuardManager().handleBlockPlace(event, player, room)) {
+            return;
+        }
 
         if (room != null && room.getState() == RoomState.PLAYING && room.getGameMode().isLuckyPillars()
                 && isLuckyPillarsForbiddenPlaceMaterial(event.getBlockPlaced().getType())) {
@@ -2261,6 +2291,7 @@ public class PlayerListener implements Listener {
             return;
         }
         plugin.getGameManager().handleLuckyPillarsDamage(event);
+        plugin.getBrickGuardManager().handleDamage(event);
         if (attacker == null) return;
 
         GameRoom room = plugin.getRoomManager().getPlayerRoom(victim.getUniqueId());
@@ -2425,6 +2456,11 @@ public class PlayerListener implements Listener {
         GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
         if (room == null) return;
 
+        if (room.getGameMode().isBrickGuard() && plugin.getBrickGuardManager().handleVoidDamage(room, player)) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (room.getGameMode().isStandaloneMiniGame() && room.getState() == RoomState.PLAYING) {
             event.setCancelled(true);
             player.setFallDistance(0.0F);
@@ -2477,6 +2513,12 @@ public class PlayerListener implements Listener {
         GameRoom room = plugin.getRoomManager().getPlayerRoom(player.getUniqueId());
         plugin.getFlashModeManager().handleSilentBootFallDamage(event, player, room);
         if (room == null) return;
+
+        if (room.getGameMode().isBrickGuard() && plugin.getBrickGuardManager().shouldCancelFallDamage(room, player)) {
+            event.setCancelled(true);
+            player.setFallDistance(0.0F);
+            return;
+        }
 
         // 在大厅中禁止摔落伤害
         if (room.getState() == RoomState.WAITING
@@ -2594,6 +2636,10 @@ public class PlayerListener implements Listener {
         }
 
         if (plugin.getGameManager().handleStandaloneMiniGameMove(event, player, room)) {
+            return;
+        }
+
+        if (plugin.getBrickGuardManager().handleMove(event, player, room)) {
             return;
         }
 
@@ -2792,6 +2838,10 @@ public class PlayerListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onPlayerInteractEntity(PlayerInteractEntityEvent event) {
+        GameRoom room = plugin.getRoomManager().getPlayerRoom(event.getPlayer().getUniqueId());
+        if (plugin.getBrickGuardManager().handleEntityInteract(event, event.getPlayer(), room)) {
+            return;
+        }
         if (shouldCancelProtectedEntityInteract(event.getPlayer(), event.getRightClicked())) {
             event.setCancelled(true);
         }

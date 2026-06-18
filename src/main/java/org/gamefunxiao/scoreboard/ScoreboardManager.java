@@ -289,6 +289,9 @@ public class ScoreboardManager {
         if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
             return getLuckyPillarsWaitingLines(room);
         }
+        if (room.getGameMode() == GameMode.BRICK_GUARD) {
+            return getBrickGuardWaitingLines(room);
+        }
         List<String> lines = new ArrayList<>();
 
         lines.add("§7");
@@ -505,6 +508,9 @@ public class ScoreboardManager {
         if (room.getGameMode().isLuckyPillars()) {
             return getLuckyPillarsPlayingLines(room);
         }
+        if (room.getGameMode().isBrickGuard()) {
+            return getBrickGuardPlayingLines(room);
+        }
         if (room.getGameMode().isIndependentMode()) {
             return getIndependentModePlayingLines(room);
         }
@@ -662,6 +668,50 @@ public class ScoreboardManager {
         lines.add("§7");
         lines.add("§8HunterGame.server");
         lines.add("§7");
+        return lines;
+    }
+
+    private List<String> getBrickGuardWaitingLines(GameRoom room) {
+        List<String> lines = new ArrayList<>();
+        lines.add("§7");
+        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
+        lines.add("§f🏷 房间号: §6" + room.getRoomId());
+        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
+        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
+        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
+        lines.add("§7");
+        if (room.getState() == RoomState.STARTING) {
+            lines.add("§f距开始: §e" + formatCountdown(room.getCountdown()));
+        } else {
+            lines.add("§f状态: §6等待更多玩家");
+        }
+        lines.add("§7");
+        lines.add("§e§l规则摘要");
+        lines.add("§f- §6板砖队守护核心方块");
+        lines.add("§f- §c下界队保护核心玩家");
+        lines.add("§f- §e一小时超时平局");
+        lines.add("§7");
+        lines.add("§8BrickGuard.mode");
+        return lines;
+    }
+
+    private List<String> getBrickGuardPlayingLines(GameRoom room) {
+        List<String> lines = new ArrayList<>();
+        lines.add("§7");
+        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
+        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
+        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
+        lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
+        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
+        lines.add("§f☠ 濒死人数: §d" + plugin.getBrickGuardManager().getDyingCount(room));
+        lines.add("§f⌛ 剩余时间: §e" + formatCountdown((int) plugin.getBrickGuardManager().getRemainingTimeSeconds(room)));
+        lines.add("§7");
+        lines.add("§e§l战场提示");
+        lines.add("§f- §6狐稿靠近核心会自动修复");
+        lines.add("§f- §c濒死记得吃下界特色小吃");
+        lines.add("§f- §7核心玩家全局发光");
+        lines.add("§7");
+        lines.add("§8BrickGuard.mode");
         return lines;
     }
 
@@ -875,6 +925,19 @@ public class ScoreboardManager {
             lines.add("§f游戏时长: §e" + formatElapsedTime(Math.max(0L, System.currentTimeMillis() - room.getGameStartTime())));
             lines.add("§7");
             lines.add("§8LuckyPillars.classic");
+            lines.add("§7");
+            return lines;
+        }
+        if (room.getGameMode().isBrickGuard()) {
+            lines.add("§x§F§F§7§C§0§0▣ §6§l板砖守卫战已结束");
+            lines.add("§7");
+            lines.add("§f结果: §e" + plugin.getBrickGuardManager().getEndedSummary(room));
+            lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
+            lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
+            lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
+            lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
+            lines.add("§7");
+            lines.add("§8BrickGuard.mode");
             lines.add("§7");
             return lines;
         }

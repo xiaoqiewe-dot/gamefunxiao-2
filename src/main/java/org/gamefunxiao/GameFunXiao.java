@@ -9,6 +9,7 @@ import org.gamefunxiao.config.ConfigManager;
 import org.gamefunxiao.config.MessageManager;
 import org.gamefunxiao.data.PlayerDataManager;
 import org.gamefunxiao.flash.FlashModeManager;
+import org.gamefunxiao.game.BrickGuardManager;
 import org.gamefunxiao.game.EndFlashKitManager;
 import org.gamefunxiao.game.GameManager;
 import org.gamefunxiao.game.RoomManager;
@@ -17,7 +18,6 @@ import org.gamefunxiao.listeners.FlashModeListener;
 import org.gamefunxiao.listeners.MenuListener;
 import org.gamefunxiao.listeners.MiniGameMapEditListener;
 import org.gamefunxiao.listeners.PlayerListener;
-import org.gamefunxiao.listeners.BrickGuardListener;
 import org.gamefunxiao.menu.MenuManager;
 import org.gamefunxiao.placeholder.GameFunPlaceholderExpansion;
 import org.gamefunxiao.scoreboard.ScoreboardManager;
@@ -51,6 +51,7 @@ public final class GameFunXiao extends JavaPlugin {
     private FlashModeManager flashModeManager;
     private EndFlashKitManager endFlashKitManager;
     private MiniGameMapManager miniGameMapManager;
+    private BrickGuardManager brickGuardManager;
     private BrickGuardMapManager brickGuardMapManager;
 
     @Override
@@ -73,6 +74,7 @@ public final class GameFunXiao extends JavaPlugin {
         flashModeManager = new FlashModeManager(this);
         flashModeManager.installBundledFlashNoteSongs();
         endFlashKitManager = new EndFlashKitManager(this);
+        brickGuardManager = new BrickGuardManager(this);
         roomManager = new RoomManager(this);
         gameManager = new GameManager(this);
         menuManager = new MenuManager(this);
@@ -277,7 +279,6 @@ public final class GameFunXiao extends JavaPlugin {
         getServer().getPluginManager().registerEvents(playerListener, this);
         getServer().getPluginManager().registerEvents(new MiniGameMapEditListener(this), this);
         getServer().getPluginManager().registerEvents(new FlashModeListener(this), this);
-        getServer().getPluginManager().registerEvents(new BrickGuardListener(this), this);
     }
 
     private void registerPlaceholderExpansion() {
@@ -351,6 +352,10 @@ public final class GameFunXiao extends JavaPlugin {
 
     public MiniGameMapManager getMiniGameMapManager() {
         return miniGameMapManager;
+    }
+
+    public BrickGuardManager getBrickGuardManager() {
+        return brickGuardManager;
     }
 
     public BrickGuardMapManager getBrickGuardMapManager() {
