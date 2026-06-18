@@ -406,10 +406,129 @@ public class MiniGameMapManager {
         if (mode == null) {
             return;
         }
+        if (isRandomActiveMap(mapId)) {
+            config().set("active_maps." + mode.getId(), "random");
+            plugin.getConfigManager().saveConfig(CONFIG_NAME);
+            return;
+        }
         String normalizedMapId = normalizeMapId(mapId);
         ensureMapDefinition(mode, normalizedMapId, -1);
         config().set("active_maps." + mode.getId(), normalizedMapId);
         plugin.getConfigManager().saveConfig(CONFIG_NAME);
+    }
+
+    public String getActiveMapId(org.gamefunxiao.game.GameMode mode) {
+        if (mode == null) {
+            return "";
+        }
+        return config().getString("active_maps." + mode.getId(), "");
+    }
+
+    public boolean isRandomActiveMapId(String mapId) {
+        return isRandomActiveMap(mapId);
+    }
+
+    public boolean hasMapDefinition(org.gamefunxiao.game.GameMode mode, String mapId) {
+        if (mode == null) {
+            return false;
+        }
+        return config().isConfigurationSection(mapPath(mode, normalizeMapId(mapId)));
+    }
+
+    public boolean deleteMapDefinition(org.gamefunxiao.game.GameMode mode, String mapId) {
+        if (mode == null || isRandomActiveMap(mapId)) {
+            return false;
+        }
+        String normalizedMapId = normalizeMapId(mapId);
+        String path = mapPath(mode, normalizedMapId);
+        if (!config().isConfigurationSection(path)) {
+            return false;
+        }
+        config().set(path, null);
+        String activePath = "active_maps." + mode.getId();
+        String active = config().getString(activePath, "");
+        if (active.equalsIgnoreCase(normalizedMapId)) {
+            config().set(activePath, findFirstRemainingMapId(mode));
+        }
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return true;
+    }
+
+    public MapDefinition setMapEnabled(org.gamefunxiao.game.GameMode mode, String mapId, boolean enabled) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        config().set(mapPath(definition) + ".enabled", enabled);
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapDisplayName(org.gamefunxiao.game.GameMode mode, String mapId, String displayName) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        String safeName = displayName == null || displayName.isBlank()
+                ? defaultDisplayName(mode, definition.mapId())
+                : displayName.trim();
+        config().set(mapPath(definition) + ".display_name", safeName);
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapPlayerRange(org.gamefunxiao.game.GameMode mode, String mapId, int minPlayers, int maxPlayers) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, maxPlayers);
+        int safeMin = Math.max(2, minPlayers);
+        int safeMax = Math.max(safeMin, maxPlayers);
+        config().set(mapPath(definition) + ".min_players", safeMin);
+        config().set(mapPath(definition) + ".max_players", safeMax);
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapTiming(org.gamefunxiao.game.GameMode mode, String mapId,
+                                      int gameTimeSeconds, int itemIntervalSeconds, int eventIntervalSeconds) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        String path = mapPath(definition);
+        config().set(path + ".game_time_seconds", Math.max(60, gameTimeSeconds));
+        config().set(path + ".random_item_interval_seconds", Math.max(2, itemIntervalSeconds));
+        config().set(path + ".random_event_interval_seconds", Math.max(8, eventIntervalSeconds));
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapBoundary(org.gamefunxiao.game.GameMode mode, String mapId,
+                                        double boundaryRadius, int eliminationY) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        String path = mapPath(definition);
+        config().set(path + ".boundary_radius", Math.max(8.0D, boundaryRadius));
+        if (eliminationY != Integer.MIN_VALUE) {
+            config().set(path + ".elimination_y", eliminationY);
+        }
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapTheme(org.gamefunxiao.game.GameMode mode, String mapId, String themeId) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        String safeTheme = themeId == null || themeId.isBlank()
+                ? defaultThemeId(definition.mapId())
+                : themeId.trim().toUpperCase(Locale.ROOT);
+        config().set(mapPath(definition) + ".theme", safeTheme);
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    public MapDefinition setMapAutoCreateTemplate(org.gamefunxiao.game.GameMode mode, String mapId, boolean autoCreateTemplate) {
+        MapDefinition definition = ensureMapDefinition(mode, mapId, -1);
+        config().set(mapPath(definition) + ".auto_create_template", autoCreateTemplate);
+        plugin.getConfigManager().saveConfig(CONFIG_NAME);
+        return getMapDefinition(definition.mode(), definition.mapId());
+    }
+
+    private String findFirstRemainingMapId(org.gamefunxiao.game.GameMode mode) {
+        String modePath = "maps." + mode.getId();
+        if (!config().isConfigurationSection(modePath)) {
+            return "random";
+        }
+        return config().getConfigurationSection(modePath).getKeys(false).stream()
+                .findFirst()
+                .orElse("random");
     }
 
     public void requestEdit(Player player, org.gamefunxiao.game.GameMode mode, String mapId, EditWorldKind kind, int maxPlayers) {

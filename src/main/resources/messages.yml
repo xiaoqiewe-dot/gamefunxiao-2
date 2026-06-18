@@ -1,6 +1,6 @@
 # GameFunXiao 消息配置文件
 # 配置版本（请勿手动修改）
-config_version: 10
+config_version: 11
 
 # 通用消息
 general:
@@ -251,7 +251,18 @@ lobby:
 
 minigame_map:
   created: "§x§7§D§F§F§C§8✦ §a已创建地图配置：§e{mode} §8/ §b{id} §7最大人数 §d{max}§7。"
+  already_exists: "§x§F§F§D§D§5§5✦ §e地图 §b{id} §6已经存在，已更新最大人数/显示名配置。"
   active_set: "§x§F§F§D§D§5§5☘ §a已把 §e{mode} §a当前地图切换为 §b{id}§a。"
+  deleted: "§x§F§F§8§8§5§5⌫ §e已删除地图 §b{map} §8(§7{id}§8)§e。"
+  enabled: "§x§5§5§F§F§A§A✔ §a已启用地图 §e{map} §8(§b{id}§8)§a。"
+  disabled: "§x§F§F§B§B§6§6↩ §e已禁用地图 §f{map} §8(§7{id}§8)§e。"
+  renamed: "§x§8§8§D§D§F§F✎ §b地图 §e{id} §b显示名已改为 §f{map}§b。"
+  range_set: "§x§F§F§D§D§5§5☘ §a地图 §e{map} §a人数范围已设为 §b{min}§7-§b{max}§a。"
+  timing_set: "§x§D§D§A§A§F§F⌛ §d地图 §f{map} §d时间已设置：游戏 §e{time}§d 秒，物品 §b{item}§d 秒，事件 §b{event}§d 秒。"
+  theme_set: "§x§F§F§D§D§8§8✦ §e地图 §f{map} §e主题已切换为 §6{theme}§e。"
+  boundary_set: "§x§8§8§D§D§F§F◎ §b地图 §f{map} §b边界半径 §e{radius} §b淘汰高度 §c{y}§b。"
+  autocreate_set: "§x§7§D§F§F§C§8✦ §b地图 §f{map} §b自动创建模板已设置为 §e{value}§b。"
+  invalid_range: "§x§F§F§8§8§5§5⚠ §c最大人数不能小于最小人数。"
   edit_request_sent: "§x§8§8§D§D§F§F🛰 §b正在送你前往 §egameing §b编辑 §e{mode} §7/ §d{id} §7/ §a{kind}§b。"
   edit_local: "§x§7§D§F§F§C§8✦ §b当前就在小游戏服，正在打开地图编辑世界。"
   edit_joined: "§x§5§5§F§F§A§A✔ §a已进入 §e{mode} §7/ §b{map} §7({id}) §a的 §d{kind}§a：§f{world}"

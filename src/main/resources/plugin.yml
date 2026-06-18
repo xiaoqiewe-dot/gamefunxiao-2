@@ -114,8 +114,12 @@ permissions:
       gamefunxiao.admin.editlobbytemplate: true
       gamefunxiao.admin.minigamemap: true
       gamefunxiao.admin.minigamemap.create: true
+      gamefunxiao.admin.minigamemap.edit: true
       gamefunxiao.admin.minigamemap.list: true
       gamefunxiao.admin.minigamemap.setactive: true
+      gamefunxiao.admin.minigamemap.enable: true
+      gamefunxiao.admin.minigamemap.delete: true
+      gamefunxiao.admin.minigamemap.settings: true
       gamefunxiao.admin.currency: true
       gamefunxiao.admin.currency.get: true
       gamefunxiao.admin.currency.set: true
@@ -161,11 +165,23 @@ permissions:
   gamefunxiao.admin.minigamemap.create:
     description: 创建小游戏地图
     default: op
+  gamefunxiao.admin.minigamemap.edit:
+    description: 编辑小游戏地图模板
+    default: op
   gamefunxiao.admin.minigamemap.list:
     description: 查看小游戏地图列表
     default: op
   gamefunxiao.admin.minigamemap.setactive:
     description: 切换小游戏活动地图
+    default: op
+  gamefunxiao.admin.minigamemap.enable:
+    description: 启用或禁用小游戏地图
+    default: op
+  gamefunxiao.admin.minigamemap.delete:
+    description: 删除小游戏地图配置
+    default: op
+  gamefunxiao.admin.minigamemap.settings:
+    description: 修改小游戏地图名称、人数、时间、主题和边界
     default: op
   gamefunxiao.admin.currency:
     description: 管理小游戏币

@@ -81,7 +81,7 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
                 }
             }
             case "setlobbyspawn" -> handleSetLobbySpawnCommand(sender);
-            case "minigamemap", "mgmap" -> handleMiniGameMap(sender, args);
+            case "map", "maps", "minigamemap", "mgmap", "地图", "地图编辑" -> handleMiniGameMap(sender, args);
             case "coins", "coin", "money" -> handleCoins(sender, args);
             case "endflashkit", "efkit", "终章kit", "flashkit", "闪光kit", "调闪光kit" -> handleEndFlashKit(sender, args);
             case "endflashender", "efender", "终章末影箱" -> handleEndFlashEnderChest(sender);
@@ -142,8 +142,12 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             entries.add("§e/gamefunxiao cleanuprooms §7- §f清理跨服幽灵房间");
             entries.add("§e/gamefunxiao editlobbytemplate <大厅名> §7- §f前往对应等待大厅模板进行修改");
             entries.add("§e/gamefun setlobbyspawn §7- §f在 gameing 的等待大厅世界中自动设置出生点");
-            entries.add("§e/gamefunxiao minigamemap setactive <模式> <地图ID> §7- §f切换小游戏当前地图");
-            entries.add("§e/gamefunxiao minigamemap list [模式] §7- §f查看小游戏地图列表");
+            entries.add("§e/gamefunxiao map list [模式] §7- §f查看小游戏地图列表");
+            entries.add("§e/gamefunxiao map create <模式> <地图ID> [人数] [显示名] §7- §f创建地图配置");
+            entries.add("§e/gamefunxiao map edit <模式> <地图ID> [game|lobby] §7- §f编辑地图模板");
+            entries.add("§e/gamefunxiao map active <模式> <地图ID|random> §7- §f切换当前地图或随机地图池");
+            entries.add("§e/gamefunxiao map enable|disable|delete <模式> <地图ID> §7- §f管理地图启用状态和删除");
+            entries.add("§e/gamefunxiao map range|time|theme|boundary <模式> <地图ID> ... §7- §f修改地图人数、时间、主题、边界");
             entries.add("§e/gamefunxiao lobbyinteract add <ID> <x1> <y1> <z1> <x2> <y2> <z2> [世界] §7- §f允许等待大厅指定区域交互");
             entries.add("§e/gamefunxiao lobbyinteract remove/list <ID> §7- §f管理等待大厅可交互区域");
             entries.add("§e/gamefunxiao coins set <数量> [玩家] §7- §f设置小游戏币");
@@ -341,7 +345,7 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.player_only"));
             return;
         }
-        if (!player.hasPermission("gamefunxiao.admin")) {
+        if (!player.hasPermission("gamefunxiao.admin.minigamemap") && !player.hasPermission("gamefunxiao.admin")) {
             player.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.no_permission"));
             return;
         }
@@ -351,19 +355,51 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        String action = args[1].toLowerCase(Locale.ROOT);
+        String action = normalizeMapAction(args[1]);
         switch (action) {
-            case "create", "new", "创建" -> handleMiniGameMapCreate(player, args);
-            case "edit", "编辑" -> handleMiniGameMapEdit(player, args);
-            case "setactive", "active", "use", "启用" -> handleMiniGameMapSetActive(player, args);
-            case "list", "列表" -> handleMiniGameMapList(player, args);
-            case "info", "查看" -> handleMiniGameMapInfo(player, args);
+            case "help" -> sendMiniGameMapUsage(player);
+            case "create" -> handleMiniGameMapCreate(player, args);
+            case "edit" -> handleMiniGameMapEdit(player, args);
+            case "active" -> handleMiniGameMapSetActive(player, args);
+            case "list" -> handleMiniGameMapList(player, args);
+            case "info" -> handleMiniGameMapInfo(player, args);
+            case "enable" -> handleMiniGameMapEnable(player, args, true);
+            case "disable" -> handleMiniGameMapEnable(player, args, false);
+            case "delete" -> handleMiniGameMapDelete(player, args);
+            case "name" -> handleMiniGameMapName(player, args);
+            case "range" -> handleMiniGameMapRange(player, args);
+            case "time" -> handleMiniGameMapTime(player, args);
+            case "theme" -> handleMiniGameMapTheme(player, args);
+            case "boundary" -> handleMiniGameMapBoundary(player, args);
+            case "autocreate" -> handleMiniGameMapAutoCreate(player, args);
             default -> sendMiniGameMapUsage(player);
         }
     }
 
+    private String normalizeMapAction(String raw) {
+        String action = raw == null ? "" : raw.toLowerCase(Locale.ROOT);
+        return switch (action) {
+            case "help", "?", "帮助" -> "help";
+            case "create", "new", "add", "创建", "新增" -> "create";
+            case "edit", "open", "编辑", "打开" -> "edit";
+            case "setactive", "active", "use", "select", "current", "设置当前", "当前" -> "active";
+            case "list", "ls", "列表" -> "list";
+            case "info", "show", "查看", "信息" -> "info";
+            case "enable", "on", "启用" -> "enable";
+            case "disable", "off", "禁用" -> "disable";
+            case "delete", "del", "remove", "rm", "删除", "移除" -> "delete";
+            case "name", "rename", "display", "命名", "改名", "显示名" -> "name";
+            case "range", "players", "人数", "范围" -> "range";
+            case "time", "timing", "时间" -> "time";
+            case "theme", "主题" -> "theme";
+            case "boundary", "border", "边界" -> "boundary";
+            case "autocreate", "template", "自动模板" -> "autocreate";
+            default -> action;
+        };
+    }
+
     private void handleMiniGameMapCreate(Player player, String[] args) {
-        if (args.length < 5) {
+        if (args.length < 4) {
             sendMiniGameMapUsage(player);
             return;
         }
@@ -371,17 +407,21 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
         if (mode == null) {
             return;
         }
-        int maxPlayers = parsePositiveInt(player, args[4]);
+        String mapId = plugin.getMiniGameMapManager().normalizeMapId(args[3]);
+        int maxPlayers = args.length >= 5 ? parsePositiveInt(player, args[4]) : 16;
         if (maxPlayers <= 0) {
             return;
         }
-        String mapId = plugin.getMiniGameMapManager().normalizeMapId(args[3]);
-        plugin.getMiniGameMapManager().ensureMapDefinition(mode, mapId, maxPlayers);
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("mode", mode.getDisplayName());
-        placeholders.put("id", mapId);
+        boolean alreadyExists = plugin.getMiniGameMapManager().hasMapDefinition(mode, mapId);
+        MiniGameMapManager.MapDefinition definition = plugin.getMiniGameMapManager().ensureMapDefinition(mode, mapId, maxPlayers);
+        if (args.length >= 6) {
+            String displayName = String.join(" ", Arrays.copyOfRange(args, 5, args.length)).replace('&', '§');
+            definition = plugin.getMiniGameMapManager().setMapDisplayName(mode, mapId, displayName);
+        }
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition == null ? mode : definition.mode(), mapId);
         placeholders.put("max", String.valueOf(maxPlayers));
-        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.created", placeholders));
+        placeholders.put("map", definition == null ? mapId : definition.displayName());
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix(alreadyExists ? "minigame_map.already_exists" : "minigame_map.created", placeholders));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_BEACON_POWER_SELECT, 0.58f, 1.45f);
     }
 
@@ -395,11 +435,13 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             return;
         }
         String mapId = plugin.getMiniGameMapManager().normalizeMapId(args[3]);
-        MiniGameMapManager.EditWorldKind kind = args.length >= 5
-                ? MiniGameMapManager.EditWorldKind.fromString(args[4])
-                : MiniGameMapManager.EditWorldKind.GAME;
-        MiniGameMapManager.MapDefinition definition = plugin.getMiniGameMapManager().ensureMapDefinition(mode, mapId, -1);
-        plugin.getMiniGameMapManager().requestEdit(player, mode, mapId, kind, definition.maxPlayers());
+        if (!plugin.getMiniGameMapManager().hasMapDefinition(mode, mapId)) {
+            player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.not_found", baseMapCommandPlaceholders(mode, mapId)));
+            return;
+        }
+        MiniGameMapManager.EditWorldKind kind = args.length >= 5 ? MiniGameMapManager.EditWorldKind.fromString(args[4]) : MiniGameMapManager.EditWorldKind.GAME;
+        MiniGameMapManager.MapDefinition definition = plugin.getMiniGameMapManager().getMapDefinition(mode, mapId);
+        plugin.getMiniGameMapManager().requestEdit(player, mode, mapId, kind, definition == null ? 16 : definition.maxPlayers());
     }
 
     private void handleMiniGameMapSetActive(Player player, String[] args) {
@@ -411,87 +453,252 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
         if (mode == null) {
             return;
         }
-        String mapId = plugin.getMiniGameMapManager().normalizeMapId(args[3]);
+        String rawMapId = args[3];
+        boolean random = plugin.getMiniGameMapManager().isRandomActiveMapId(rawMapId);
+        String mapId = random ? "random" : plugin.getMiniGameMapManager().normalizeMapId(rawMapId);
+        if (!random && !plugin.getMiniGameMapManager().hasMapDefinition(mode, mapId)) {
+            player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.not_found", baseMapCommandPlaceholders(mode, mapId)));
+            return;
+        }
         plugin.getMiniGameMapManager().setActiveMap(mode, mapId);
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("mode", mode.getDisplayName());
+        Map<String, String> placeholders = baseMapCommandPlaceholders(mode, mapId);
         placeholders.put("id", mapId);
         player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.active_set", placeholders));
         player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.65f, 1.28f);
     }
 
     private void handleMiniGameMapList(Player player, String[] args) {
-        GameMode mode = args.length >= 3 ? parseExplicitGameMode(player, args[2]) : GameMode.END_FLASH;
-        if (mode == null) {
+        if (args.length < 3) {
+            for (GameMode mode : GameMode.getMiniGameMapEditableModes()) {
+                sendMiniGameMapListForMode(player, mode);
+            }
             return;
         }
+        GameMode mode = parseExplicitGameMode(player, args[2]);
+        if (mode != null) {
+            sendMiniGameMapListForMode(player, mode);
+        }
+    }
+
+    private void sendMiniGameMapListForMode(Player player, GameMode mode) {
         List<MiniGameMapManager.MapDefinition> maps = plugin.getMiniGameMapManager().getMapDefinitions(mode);
-        player.sendMessage("§x§7§D§F§F§C§8✦ §x§A§9§F§F§E§4小游戏地图 §8» §b" + mode.getDisplayName() + " §f地图列表");
+        String active = plugin.getMiniGameMapManager().getActiveMapId(mode);
+        String activeDisplay = plugin.getMiniGameMapManager().isRandomActiveMapId(active) ? "random" : active;
+        player.sendMessage("§x§7§D§F§F§C§8✦ §x§A§9§F§F§E§4地图编辑 §8» §b" + mode.getDisplayName() + " §f地图列表 §8(当前 §e" + activeDisplay + "§8)");
         if (maps.isEmpty()) {
-            player.sendMessage("§8· §7暂无地图，使用 §e/gamefunxiao minigamemap create " + mode.getId() + " default 16 §7创建。");
+            player.sendMessage("§8· §7暂无地图，使用 §e/gamefunxiao map create " + mode.getId() + " default 16 §7创建。");
             return;
         }
-        String active = plugin.getMiniGameMapManager().getActiveMap(mode) == null
-                ? ""
-                : plugin.getMiniGameMapManager().getActiveMap(mode).mapId();
         for (MiniGameMapManager.MapDefinition definition : maps) {
             String mark = definition.mapId().equalsIgnoreCase(active) ? "§a✔ " : "§8- ";
+            String enabled = definition.enabled() ? "§a启用" : "§c禁用";
             player.sendMessage(mark + "§e" + definition.mapId() + " §7| §f" + definition.displayName()
-                    + " §7| 人数 §b" + definition.maxPlayers()
-                    + " §7| 出生点 §d" + definition.gameSpawns().size());
+                    + " §7| " + enabled
+                    + " §7| 人数 §b" + definition.minPlayers() + "§7-§b" + definition.maxPlayers()
+                    + " §7| 出生点 §d" + definition.gameSpawns().size()
+                    + " §7| 主题 §6" + definition.themeId());
         }
     }
 
     private void handleMiniGameMapInfo(Player player, String[] args) {
-        if (args.length < 4) {
-            sendMiniGameMapUsage(player);
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 4);
+        if (definition != null) {
+            plugin.getMiniGameMapManager().sendMapInfo(player, definition);
+        }
+    }
+
+    private void handleMiniGameMapEnable(Player player, String[] args, boolean enabled) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 4);
+        if (definition == null) {
             return;
+        }
+        definition = plugin.getMiniGameMapManager().setMapEnabled(definition.mode(), definition.mapId(), enabled);
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix(enabled ? "minigame_map.enabled" : "minigame_map.disabled", baseMapCommandPlaceholders(definition)));
+        player.playSound(player.getLocation(), enabled ? org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME : org.bukkit.Sound.BLOCK_BEACON_DEACTIVATE, 0.62f, enabled ? 1.35f : 0.82f);
+    }
+
+    private void handleMiniGameMapDelete(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 4);
+        if (definition == null) {
+            return;
+        }
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        boolean deleted = plugin.getMiniGameMapManager().deleteMapDefinition(definition.mode(), definition.mapId());
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix(deleted ? "minigame_map.deleted" : "minigame_map.not_found", placeholders));
+        player.playSound(player.getLocation(), deleted ? org.bukkit.Sound.BLOCK_ANVIL_LAND : org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.55f, deleted ? 1.65f : 0.8f);
+    }
+
+    private void handleMiniGameMapName(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 5);
+        if (definition == null) return;
+        String displayName = String.join(" ", Arrays.copyOfRange(args, 4, args.length)).replace('&', '§');
+        definition = plugin.getMiniGameMapManager().setMapDisplayName(definition.mode(), definition.mapId(), displayName);
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.renamed", baseMapCommandPlaceholders(definition)));
+        player.playSound(player.getLocation(), org.bukkit.Sound.ITEM_BOOK_PAGE_TURN, 0.5f, 1.52f);
+    }
+
+    private void handleMiniGameMapRange(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 6);
+        if (definition == null) return;
+        int min = parsePositiveInt(player, args[4]);
+        int max = parsePositiveInt(player, args[5]);
+        if (min <= 0 || max <= 0) return;
+        if (max < min) {
+            player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.invalid_range", baseMapCommandPlaceholders(definition)));
+            return;
+        }
+        definition = plugin.getMiniGameMapManager().setMapPlayerRange(definition.mode(), definition.mapId(), min, max);
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        placeholders.put("min", String.valueOf(definition.minPlayers()));
+        placeholders.put("max", String.valueOf(definition.maxPlayers()));
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.range_set", placeholders));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_BIT, 0.58f, 1.38f);
+    }
+
+    private void handleMiniGameMapTime(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 5);
+        if (definition == null) return;
+        int gameTime = parsePositiveInt(player, args[4]);
+        if (gameTime <= 0) return;
+        int itemInterval = args.length >= 6 ? parsePositiveInt(player, args[5]) : definition.randomItemIntervalSeconds();
+        int eventInterval = args.length >= 7 ? parsePositiveInt(player, args[6]) : definition.randomEventIntervalSeconds();
+        if (itemInterval <= 0 || eventInterval <= 0) return;
+        definition = plugin.getMiniGameMapManager().setMapTiming(definition.mode(), definition.mapId(), gameTime, itemInterval, eventInterval);
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        placeholders.put("time", String.valueOf(definition.gameTimeSeconds()));
+        placeholders.put("item", String.valueOf(definition.randomItemIntervalSeconds()));
+        placeholders.put("event", String.valueOf(definition.randomEventIntervalSeconds()));
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.timing_set", placeholders));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.54f, 1.7f);
+    }
+
+    private void handleMiniGameMapTheme(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 5);
+        if (definition == null) return;
+        definition = plugin.getMiniGameMapManager().setMapTheme(definition.mode(), definition.mapId(), args[4]);
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        placeholders.put("theme", definition.themeId());
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.theme_set", placeholders));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_END_PORTAL_FRAME_FILL, 0.48f, 1.35f);
+    }
+
+    private void handleMiniGameMapBoundary(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 5);
+        if (definition == null) return;
+        double radius = parsePositiveDouble(player, args[4]);
+        if (radius <= 0.0D) return;
+        int eliminationY = args.length >= 6 ? parseInteger(player, args[5]) : Integer.MIN_VALUE;
+        if (args.length >= 6 && eliminationY == Integer.MIN_VALUE) return;
+        definition = plugin.getMiniGameMapManager().setMapBoundary(definition.mode(), definition.mapId(), radius, eliminationY);
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        placeholders.put("radius", String.format(Locale.ROOT, "%.1f", definition.boundaryRadius()));
+        placeholders.put("y", String.valueOf(definition.eliminationY()));
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.boundary_set", placeholders));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_CONDUIT_ACTIVATE, 0.52f, 1.28f);
+    }
+
+    private void handleMiniGameMapAutoCreate(Player player, String[] args) {
+        MiniGameMapManager.MapDefinition definition = requireMapDefinition(player, args, 5);
+        if (definition == null) return;
+        Boolean value = parseBoolean(args[4]);
+        if (value == null) {
+            player.sendMessage("§x§F§F§8§8§5§5⚠ §c请输入 true 或 false。");
+            return;
+        }
+        definition = plugin.getMiniGameMapManager().setMapAutoCreateTemplate(definition.mode(), definition.mapId(), value);
+        Map<String, String> placeholders = baseMapCommandPlaceholders(definition);
+        placeholders.put("value", definition.autoCreateTemplate() ? "开启" : "关闭");
+        player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.autocreate_set", placeholders));
+        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_COMPARATOR_CLICK, 0.62f, value ? 1.45f : 0.78f);
+    }
+
+    private MiniGameMapManager.MapDefinition requireMapDefinition(Player player, String[] args, int minArgs) {
+        if (args.length < minArgs) {
+            sendMiniGameMapUsage(player);
+            return null;
         }
         GameMode mode = parseExplicitGameMode(player, args[2]);
-        if (mode == null) {
-            return;
-        }
-        MiniGameMapManager.MapDefinition definition = plugin.getMiniGameMapManager().getMapDefinition(mode, args[3]);
+        if (mode == null) return null;
+        String mapId = plugin.getMiniGameMapManager().normalizeMapId(args[3]);
+        MiniGameMapManager.MapDefinition definition = plugin.getMiniGameMapManager().getMapDefinition(mode, mapId);
         if (definition == null) {
-            player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.not_found"));
-            return;
+            player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.not_found", baseMapCommandPlaceholders(mode, mapId)));
+            return null;
         }
-        plugin.getMiniGameMapManager().sendMapInfo(player, definition);
+        return definition;
     }
 
     private void sendMiniGameMapUsage(Player player) {
-        player.sendMessage("§x§7§D§F§F§C§8✦ §x§A§9§F§F§E§4小游戏地图命令");
-        player.sendMessage("§e/gamefunxiao minigamemap create <模式> <地图ID> <人数> §7- §f只创建配置");
-        player.sendMessage("§e/gamefunxiao minigamemap edit <模式> <地图ID> [lobby/game/nether] §7- §f编辑地图模板");
-        player.sendMessage("§e/gamefunxiao minigamemap setactive <模式> <地图ID> §7- §f设置当前地图");
-        player.sendMessage("§e/gamefunxiao minigamemap list [模式] §7- §f查看地图列表");
-        player.sendMessage("§8例如: §b/gamefunxiao minigamemap create lucky_pillars default 16");
-        player.sendMessage("§8猎人玩法可直接用 §e/gamefunxiao command quick classic §8或 §e/gamefunxiao command quick end_flash");
+        player.sendMessage("§x§7§D§F§F§C§8✦ §x§A§9§F§F§E§4GameFun 地图编辑命令");
+        player.sendMessage("§e/gamefunxiao map list [模式] §7- §f查看全部或指定模式地图");
+        player.sendMessage("§e/gamefunxiao map create <模式> <地图ID> [最大人数] [显示名...] §7- §f创建独立地图配置");
+        player.sendMessage("§e/gamefunxiao map edit <模式> <地图ID> [game|lobby] §7- §f进入游戏地图或等待大厅编辑");
+        player.sendMessage("§e/gamefunxiao map active <模式> <地图ID|random> §7- §f切换固定地图或随机地图池");
+        player.sendMessage("§e/gamefunxiao map enable|disable|delete <模式> <地图ID> §7- §f启用、禁用、删除地图");
+        player.sendMessage("§e/gamefunxiao map name|range|time|theme|boundary|autocreate <模式> <地图ID> ... §7- §f修改显示名、人数、时间、主题、边界、模板策略");
+        player.sendMessage("§8例如: §b/gamefunxiao map create lucky_pillars small 8 羊毛圆盘");
     }
 
     private GameMode parseExplicitGameMode(Player player, String modeId) {
-        GameMode mode = GameMode.findByIdStrict(modeId)
-                .filter(GameMode::isMiniGameMapEditableMode)
-                .orElse(null);
-        if (mode != null) {
-            return mode;
-        }
+        GameMode mode = GameMode.findByIdStrict(modeId).filter(GameMode::isMiniGameMapEditableMode).orElse(null);
+        if (mode != null) return mode;
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("mode", modeId == null ? "null" : modeId);
         player.sendMessage(plugin.getMessageManager().getMiniGameMessageWithPrefix("minigame_map.invalid_mode", placeholders));
         return null;
     }
 
+    private Map<String, String> baseMapCommandPlaceholders(MiniGameMapManager.MapDefinition definition) {
+        return baseMapCommandPlaceholders(definition == null ? null : definition.mode(), definition == null ? "unknown" : definition.mapId(), definition == null ? "未知地图" : definition.displayName());
+    }
+
+    private Map<String, String> baseMapCommandPlaceholders(GameMode mode, String mapId) {
+        return baseMapCommandPlaceholders(mode, mapId, mapId == null ? "unknown" : mapId);
+    }
+
+    private Map<String, String> baseMapCommandPlaceholders(GameMode mode, String mapId, String displayName) {
+        Map<String, String> placeholders = new HashMap<>();
+        placeholders.put("mode", mode == null ? "未知模式" : mode.getDisplayName());
+        placeholders.put("id", mapId == null ? "unknown" : mapId);
+        placeholders.put("map", displayName == null ? "未知地图" : displayName);
+        return placeholders;
+    }
+
     private int parsePositiveInt(Player player, String value) {
         try {
             int parsed = Integer.parseInt(value);
-            if (parsed > 0) {
-                return parsed;
-            }
+            if (parsed > 0) return parsed;
         } catch (NumberFormatException ignored) {
         }
         player.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.invalid_number"));
         return -1;
+    }
+
+    private int parseInteger(Player player, String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException ignored) {
+            player.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.invalid_number"));
+            return Integer.MIN_VALUE;
+        }
+    }
+
+    private double parsePositiveDouble(Player player, String value) {
+        try {
+            double parsed = Double.parseDouble(value);
+            if (parsed > 0.0D) return parsed;
+        } catch (NumberFormatException ignored) {
+        }
+        player.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.invalid_number"));
+        return -1.0D;
+    }
+
+    private Boolean parseBoolean(String value) {
+        if (value == null) return null;
+        String lower = value.toLowerCase(Locale.ROOT);
+        if (lower.equals("true") || lower.equals("on") || lower.equals("yes") || lower.equals("开启")) return true;
+        if (lower.equals("false") || lower.equals("off") || lower.equals("no") || lower.equals("关闭")) return false;
+        return null;
     }
 
     private void handleEndFlashDebug(CommandSender sender) {
@@ -1906,8 +2113,11 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
                     completions.add("editlobbytemplate");
                     completions.add("edittemplate");
                     completions.add("setlobbyspawn");
+                    completions.add("map");
+                    completions.add("maps");
                     completions.add("minigamemap");
                     completions.add("mgmap");
+                    completions.add("地图");
                     completions.add("lobbyinteract");
                     completions.add("lobbyregion");
                     completions.add("调终章");
@@ -1919,9 +2129,9 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             if (isFlashMusicCommand(args[0])) {
                 return tabCompleteFlashMusic(sender, args);
             }
-            if ((args[0].equalsIgnoreCase("minigamemap") || args[0].equalsIgnoreCase("mgmap"))
+            if (isMiniGameMapCommand(args[0])
                     && sender.hasPermission("gamefunxiao.admin")) {
-                completions.addAll(Arrays.asList("create", "edit", "setactive", "list", "info"));
+                completions.addAll(getMiniGameMapActions());
             } else if ((args[0].equalsIgnoreCase("editlobbytemplate") || args[0].equalsIgnoreCase("edittemplate"))
                     && sender.hasPermission("gamefunxiao.admin")) {
                 completions.add("hugamelobby");
@@ -1960,10 +2170,10 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             if (isFlashMusicCommand(args[0])) {
                 return tabCompleteFlashMusic(sender, args);
             }
-            if ((args[0].equalsIgnoreCase("minigamemap") || args[0].equalsIgnoreCase("mgmap"))
+            if (isMiniGameMapCommand(args[0])
                     && sender.hasPermission("gamefunxiao.admin")) {
-                String action = args[1].toLowerCase(Locale.ROOT);
-                if (action.equals("create") || action.equals("edit") || action.equals("setactive") || action.equals("list") || action.equals("info")) {
+                String action = normalizeMapAction(args[1]);
+                if (getMiniGameMapActions().contains(action)) {
                     addMiniGameModeCompletions(completions);
                 }
             } else if (isLobbyInteractCommand(args[0]) && sender.hasPermission("gamefunxiao.admin")) {
@@ -2030,15 +2240,17 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             if (isFlashMusicCommand(args[0])) {
                 return tabCompleteFlashMusic(sender, args);
             }
-            if ((args[0].equalsIgnoreCase("minigamemap") || args[0].equalsIgnoreCase("mgmap"))
+            if (isMiniGameMapCommand(args[0])
                     && sender.hasPermission("gamefunxiao.admin")) {
-                String action = args[1].toLowerCase(Locale.ROOT);
+                String action = normalizeMapAction(args[1]);
                 GameMode mode = findCompletionMode(args[2]);
-                if (action.equals("setactive") || action.equals("info") || action.equals("edit")) {
+                if (action.equals("create")) {
+                    completions.addAll(Arrays.asList("default", "small", "middle", "large", "nether", "void", "ocean"));
+                } else if (action.equals("active")) {
+                    completions.addAll(Arrays.asList("random", "all"));
                     addMapIdCompletions(completions, mode);
-                    completions.addAll(Arrays.asList("default", "small", "middle", "large", "quarry", "foundry", "rift"));
-                } else if (action.equals("create")) {
-                    completions.addAll(Arrays.asList("default", "small", "middle", "large"));
+                } else if (needsMapIdCompletion(action)) {
+                    addMapIdCompletions(completions, mode);
                 }
             } else if (isCommandBranch(args[0])) {
                 String action = args[1].toLowerCase(Locale.ROOT);
@@ -2061,16 +2273,8 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             if (isFlashMusicCommand(args[0])) {
                 return tabCompleteFlashMusic(sender, args);
             }
-            if (args.length == 5 && (args[0].equalsIgnoreCase("minigamemap") || args[0].equalsIgnoreCase("mgmap"))
-                    && sender.hasPermission("gamefunxiao.admin") && args[1].equalsIgnoreCase("edit")) {
-                completions.addAll(Arrays.asList("game", "lobby", "游戏地图", "等待大厅"));
-            }
-            if ((args[0].equalsIgnoreCase("minigamemap") || args[0].equalsIgnoreCase("mgmap"))
-                    && sender.hasPermission("gamefunxiao.admin")) {
-                String action = args[1].toLowerCase(Locale.ROOT);
-                if (args.length == 5 && action.equals("create")) {
-                    completions.addAll(Arrays.asList("2", "4", "8", "12", "16", "24", "32"));
-                }
+            if (isMiniGameMapCommand(args[0]) && sender.hasPermission("gamefunxiao.admin")) {
+                addMiniGameMapArgumentCompletions(completions, args);
             } else if (isCommandBranch(args[0])) {
                 String action = args[1].toLowerCase(Locale.ROOT);
                 if (action.equals("create")) {
@@ -2104,6 +2308,50 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
         completions.removeIf(s -> !s.toLowerCase().startsWith(input));
 
         return completions;
+    }
+
+
+    private boolean isMiniGameMapCommand(String value) {
+        return value.equalsIgnoreCase("map")
+                || value.equalsIgnoreCase("maps")
+                || value.equalsIgnoreCase("minigamemap")
+                || value.equalsIgnoreCase("mgmap")
+                || value.equalsIgnoreCase("地图")
+                || value.equalsIgnoreCase("地图编辑");
+    }
+
+    private List<String> getMiniGameMapActions() {
+        return Arrays.asList("help", "list", "create", "edit", "active", "enable", "disable", "delete", "info",
+                "name", "range", "time", "theme", "boundary", "autocreate");
+    }
+
+    private boolean needsMapIdCompletion(String action) {
+        return action.equals("edit") || action.equals("info") || action.equals("enable") || action.equals("disable")
+                || action.equals("delete") || action.equals("name") || action.equals("range") || action.equals("time")
+                || action.equals("theme") || action.equals("boundary") || action.equals("autocreate");
+    }
+
+    private void addMiniGameMapArgumentCompletions(List<String> completions, String[] args) {
+        String action = normalizeMapAction(args[1]);
+        if (args.length == 5) {
+            switch (action) {
+                case "create" -> completions.addAll(Arrays.asList("2", "4", "8", "12", "16", "24", "32"));
+                case "edit" -> completions.addAll(Arrays.asList("game", "lobby", "游戏地图", "等待大厅"));
+                case "range" -> completions.addAll(Arrays.asList("2", "4", "8", "16"));
+                case "time" -> completions.addAll(Arrays.asList("300", "480", "600", "900"));
+                case "theme" -> completions.addAll(Arrays.asList("WOOL", "VOID", "OCEAN", "NETHER", "GLASS", "TNT", "MOON"));
+                case "boundary" -> completions.addAll(Arrays.asList("52", "66", "96", "128"));
+                case "autocreate" -> completions.addAll(Arrays.asList("true", "false", "开启", "关闭"));
+            }
+        } else if (args.length == 6) {
+            switch (action) {
+                case "range" -> completions.addAll(Arrays.asList("8", "16", "24", "32", "64"));
+                case "time" -> completions.addAll(Arrays.asList("3", "5", "8", "10"));
+                case "boundary" -> completions.addAll(Arrays.asList("80", "100", "120", "140"));
+            }
+        } else if (args.length == 7 && action.equals("time")) {
+            completions.addAll(Arrays.asList("20", "30", "45", "60"));
+        }
     }
 
     private boolean isFlashMusicCommand(String value) {
