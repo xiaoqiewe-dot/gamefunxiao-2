@@ -9,6 +9,7 @@ import org.gamefunxiao.config.ConfigManager;
 import org.gamefunxiao.config.MessageManager;
 import org.gamefunxiao.data.PlayerDataManager;
 import org.gamefunxiao.flash.FlashModeManager;
+import org.gamefunxiao.game.BrickGuardManager;
 import org.gamefunxiao.game.EndFlashKitManager;
 import org.gamefunxiao.game.GameManager;
 import org.gamefunxiao.game.RoomManager;
@@ -49,6 +50,7 @@ public final class GameFunXiao extends JavaPlugin {
     private FlashModeManager flashModeManager;
     private EndFlashKitManager endFlashKitManager;
     private MiniGameMapManager miniGameMapManager;
+    private BrickGuardManager brickGuardManager;
 
     @Override
     public void onEnable() {
@@ -69,6 +71,7 @@ public final class GameFunXiao extends JavaPlugin {
         flashModeManager = new FlashModeManager(this);
         flashModeManager.installBundledFlashNoteSongs();
         endFlashKitManager = new EndFlashKitManager(this);
+        brickGuardManager = new BrickGuardManager(this);
         roomManager = new RoomManager(this);
         gameManager = new GameManager(this);
         menuManager = new MenuManager(this);
@@ -346,5 +349,9 @@ public final class GameFunXiao extends JavaPlugin {
 
     public MiniGameMapManager getMiniGameMapManager() {
         return miniGameMapManager;
+    }
+
+    public BrickGuardManager getBrickGuardManager() {
+        return brickGuardManager;
     }
 }

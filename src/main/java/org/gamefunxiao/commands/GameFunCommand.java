@@ -1353,7 +1353,7 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
         }
 
         // 检查各个配置文件
-        String[] configFiles = {"gamemodes.yml", "modifiers.yml", "rewards.yml", "scoreboard.yml", "minigame-maps.yml", "minigames.yml"};
+        String[] configFiles = {"gamemodes.yml", "modifiers.yml", "rewards.yml", "scoreboard.yml", "minigame-maps.yml", "brick-guard-maps.yml", "minigames.yml"};
         for (String fileName : configFiles) {
             java.io.File file = new java.io.File(configFolder, fileName);
             if (!file.exists()) {
@@ -1687,6 +1687,14 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
             case "leaderboard", "lb", "排行", "排行榜" -> plugin.getMenuManager().openBrickGuardLeaderboardMenu(player);
             case "join", "加入" -> handleCommandJoinRoom(player, args);
             case "create", "createroom", "创建", "创建房间" -> handleBrickGuardCreate(player, args);
+            case "map", "地图", "地图编辑" -> handleMiniGameMap(player, new String[]{"map", "help"});
+            case "debug", "调试" -> {
+                if (!player.hasPermission("gamefunxiao.admin.brickguard.debug") && !player.hasPermission("gamefunxiao.admin")) {
+                    player.sendMessage(plugin.getMessageManager().getMessageWithPrefix("general.no_permission"));
+                    return;
+                }
+                player.sendMessage(plugin.getConfigManager().getBrickGuardPrefix() + "§7运行状态: §a队伍§7/§e核心§7/§b资源§7/§d濒死§7/§6胜负§7监听均已启用。地图配置: §fconfig/brick-guard-maps.yml");
+            }
             default -> plugin.getMenuManager().openBrickGuardMenu(player);
         }
     }
@@ -2614,5 +2622,3 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
         return builder.toString();
     }
 }
-
-

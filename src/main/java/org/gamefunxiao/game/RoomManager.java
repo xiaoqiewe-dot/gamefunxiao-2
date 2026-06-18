@@ -311,7 +311,7 @@ public class RoomManager {
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.85f, 1.0f);
                 return false;
             }
-            if ((room.getGameMode().isFlashLike() || room.getGameMode().isLuckyPillars() || room.getGameMode().isStandaloneMiniGame())
+            if ((room.getGameMode().isFlashLike() || room.getGameMode().isLuckyPillars() || room.getGameMode().isBrickGuard() || room.getGameMode().isStandaloneMiniGame())
                     && (room.getState() == RoomState.PLAYING || room.getState() == RoomState.SELECTING)) {
                 spectateRoom(player, room);
             } else {
@@ -1054,6 +1054,9 @@ public class RoomManager {
     public void deleteRoom(String roomId) {
         GameRoom room = rooms.remove(roomId);
         if (room != null) {
+            if (room.getGameMode().isBrickGuard()) {
+                plugin.getBrickGuardManager().removeSession(roomId);
+            }
             keepEndingChatIsolation(room, 120_000L);
             // 清除所有玩家的房间记录
             for (UUID uuid : room.getAllPlayerUUIDs()) {
@@ -1598,6 +1601,9 @@ public class RoomManager {
         if (mode == GameMode.SWAP) {
             return 3;
         }
+        if (mode == GameMode.BRICK_GUARD) {
+            return 2;
+        }
         if (mode == GameMode.TNT_RUN || mode == GameMode.BLOCK_PARTY) {
             org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfigManager().getConfig("minigames");
             String modePath = mode == GameMode.TNT_RUN ? "tnt_run" : "block_party";
@@ -1854,6 +1860,10 @@ public class RoomManager {
             player.setPlayerListName(null);
             return;
         }
+        if (room != null && room.getGameMode() == GameMode.BRICK_GUARD) {
+            player.setPlayerListName(formatGradientRoomId(roomId) + " " + plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()) + "§f" + player.getName());
+            return;
+        }
         if (room != null && room.getGameMode().isIndependentMode()) {
             String gradientRoomId = formatGradientRoomId(roomId);
             String label = normalizeRoleLabel(roleLabel, "参赛", 18);
@@ -1896,6 +1906,12 @@ public class RoomManager {
             if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
                 setRoleNameTag(p, room.getRoomId(), false, "");
                 updatePlayerTabNameWithRole(p, room.getRoomId(), false, "");
+                continue;
+            }
+            if (room.getGameMode() == GameMode.BRICK_GUARD) {
+                String label = plugin.getBrickGuardManager().getRoleLabel(room, uuid);
+                setRoleNameTag(p, room.getRoomId(), false, label);
+                updatePlayerTabNameWithRole(p, room.getRoomId(), false, label);
                 continue;
             }
             if (room.getGameMode().isIndependentMode()) {
@@ -1942,6 +1958,16 @@ public class RoomManager {
                     } else {
                         setRoleNameTag(player, room.getRoomId(), false, "");
                         updatePlayerTabNameWithRole(player, room.getRoomId(), false, "");
+                    }
+                    continue;
+                }
+                if (room.getGameMode() == GameMode.BRICK_GUARD) {
+                    if (room.isSpectator(uuid) || plugin.getBrickGuardManager().isEliminated(room, uuid)) {
+                        setSpectatorNameTag(player, room.getRoomId());
+                    } else {
+                        String label = plugin.getBrickGuardManager().getRoleLabel(room, uuid);
+                        setRoleNameTag(player, room.getRoomId(), false, label);
+                        updatePlayerTabNameWithRole(player, room.getRoomId(), false, label);
                     }
                     continue;
                 }
@@ -2062,6 +2088,38 @@ public class RoomManager {
                     team.addEntry(player.getName());
                 }
             }
+            return;
+        }
+        if (room != null && room.getGameMode() == GameMode.BRICK_GUARD) {
+            String teamName = "gf_bg_" + player.getName();
+            if (teamName.length() > 16) teamName = teamName.substring(0, 16);
+            clearRoleNameTag(player);
+            java.util.Set<java.util.UUID> allPlayers = new java.util.HashSet<>();
+            allPlayers.addAll(room.getAllPlayerUUIDs());
+            allPlayers.addAll(room.getSpectators());
+            String prefix = plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()).replace("§r", "") + "§r";
+            org.bukkit.ChatColor teamColor = roleLabel != null && roleLabel.contains("下界") ? ChatColor.DARK_RED
+                    : roleLabel != null && roleLabel.contains("濒死") ? ChatColor.LIGHT_PURPLE
+                    : roleLabel != null && roleLabel.contains("旁观") ? ChatColor.GRAY
+                    : ChatColor.GOLD;
+            for (java.util.UUID uuid : allPlayers) {
+                org.bukkit.entity.Player viewer = org.bukkit.Bukkit.getPlayer(uuid);
+                if (viewer == null || !viewer.isOnline()) continue;
+                org.bukkit.scoreboard.Scoreboard scoreboard = viewer.getScoreboard();
+                if (scoreboard == null || scoreboard == org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard()) {
+                    scoreboard = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
+                }
+                org.bukkit.scoreboard.Team team = scoreboard.getTeam(teamName);
+                if (team == null) {
+                    team = scoreboard.registerNewTeam(teamName);
+                }
+                team.setPrefix(prefix);
+                team.setColor(teamColor);
+                if (!team.hasEntry(player.getName())) {
+                    team.addEntry(player.getName());
+                }
+            }
+            player.setPlayerListName(formatGradientRoomId(roomId) + " " + plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()) + "§f" + player.getName());
             return;
         }
         if (room != null && room.getGameMode().isIndependentMode()) {
@@ -2341,4 +2399,3 @@ public class RoomManager {
         return result.toString();
     }
 }
-

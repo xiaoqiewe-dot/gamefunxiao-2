@@ -1,0 +1,10 @@
+config_version: 1
+
+active_map: default
+
+maps:
+  default:
+    display_name: "默认板砖战场"
+    core_health: 500
+    pseudo_boundary_radius: 1500
+    game_time_limit_seconds: 3600
