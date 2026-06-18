@@ -63,4 +63,4 @@ mvn clean package
 
 ## License
 
-暂未指定开源许可证。
+本项目基于 BSD 3-Clause License 开源，详见 `LICENSE`。
