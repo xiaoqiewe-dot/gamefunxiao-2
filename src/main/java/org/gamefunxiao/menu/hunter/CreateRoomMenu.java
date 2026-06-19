@@ -40,7 +40,6 @@ public class CreateRoomMenu extends BaseMenu {
     private static String resolveTitle(MenuSection menuSection) {
         return switch (menuSection) {
             case LUCKY_PILLARS -> "§0§l🍀 幸运之柱 - 创建房间 🍀";
-            case BRICK_GUARD -> "§0§l创建房间";
             case GENERIC, HUNTER -> "§0§l⚔ 猎人游戏 - 创建房间 ⚔";
         };
     }
@@ -48,7 +47,6 @@ public class CreateRoomMenu extends BaseMenu {
     private static List<GameMode> resolveModes(MenuSection menuSection) {
         return switch (menuSection) {
             case LUCKY_PILLARS -> new ArrayList<>(GameMode.getLuckyPillarsSectionModes());
-            case BRICK_GUARD -> new ArrayList<>(GameMode.getBrickGuardSectionModes());
             case GENERIC, HUNTER -> GameMode.getHunterCreateMenuModes();
         };
     }
@@ -68,12 +66,10 @@ public class CreateRoomMenu extends BaseMenu {
 
         inventory.setItem(4, createTitleItem(getSectionTitleMaterial(),
                 getSectionTitleText(),
-                switch (menuSection) {
-                    case LUCKY_PILLARS -> "§f先选你要开的幸运之柱玩法";
-                    case BRICK_GUARD -> "§f先确认你要开的房间类型";
-                    case GENERIC, HUNTER -> "§f先选你要开的猎人玩法";
-                },
-                menuSection == MenuSection.BRICK_GUARD ? "§f这里会直接进入板砖守卫战房间设置" : "§f这个界面里的模式都只属于当前玩法分区"));
+                "§8· · · · · · · · · · · · · ·",
+                menuSection == MenuSection.LUCKY_PILLARS ? "§f先选你要开的幸运之柱玩法" : "§f先选你要开的猎人玩法",
+                "§f这个界面里的模式都只属于当前玩法分区",
+                "§8· · · · · · · · · · · · · ·"));
 
         for (int i = 0; i < availableModes.size() && i < MODE_SLOTS.length; i++) {
             inventory.setItem(MODE_SLOTS[i], createModeButton(availableModes.get(i)));
@@ -87,8 +83,10 @@ public class CreateRoomMenu extends BaseMenu {
 
         inventory.setItem(4, createTitleItem(getSectionTitleMaterial(),
                 getSectionTitleText(),
+                "§8· · · · · · · · · · · · · ·",
                 "§f当前模式: §e" + selectedMode.getDisplayName(),
-                menuSection == MenuSection.BRICK_GUARD ? "§f继续设置房间人数和加入方式" : "§f继续设置这个玩法房间的基础参数"));
+                "§f继续设置这个玩法房间的基础参数",
+                "§8· · · · · · · · · · · · · ·"));
 
         inventory.setItem(19, createMaxPlayersButton());
         inventory.setItem(10, createItem(Material.RED_STAINED_GLASS_PANE,
@@ -115,19 +113,13 @@ public class CreateRoomMenu extends BaseMenu {
     }
 
     private Material getSectionTitleMaterial() {
-        return switch (menuSection) {
-            case LUCKY_PILLARS -> Material.GOLD_BLOCK;
-            case BRICK_GUARD -> Material.BRICK;
-            case GENERIC, HUNTER -> Material.IRON_SWORD;
-        };
+        return menuSection == MenuSection.LUCKY_PILLARS ? Material.GOLD_BLOCK : Material.IRON_SWORD;
     }
 
     private String getSectionTitleText() {
-        return switch (menuSection) {
-            case LUCKY_PILLARS -> "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱房间";
-            case BRICK_GUARD -> "§x§F§F§7§C§0§0▣ §x§F§F§8§8§1§1板§x§F§F§9§4§2§2砖§x§D§D§6§6§1§1守§x§B§B§4§4§0§0卫§x§6§6§1§9§0§0战房间";
-            case GENERIC, HUNTER -> "§x§F§F§6§6§0§0⚔ §x§F§F§9§9§3§3猎§x§F§F§C§C§6§6人§x§F§F§F§F§9§9房§x§C§C§F§F§9§9间";
-        };
+        return menuSection == MenuSection.LUCKY_PILLARS
+                ? "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱房间"
+                : "§x§F§F§6§6§0§0⚔ §x§F§F§9§9§3§3猎§x§F§F§C§C§6§6人§x§F§F§F§F§9§9房§x§C§C§F§F§9§9间";
     }
 
     private ItemStack createModeButton(GameMode mode) {
@@ -159,7 +151,6 @@ public class CreateRoomMenu extends BaseMenu {
             case END_FLASH -> Material.END_CRYSTAL;
             case CUSTOM -> Material.COMMAND_BLOCK;
             case LUCKY_PILLARS -> Material.GOLD_BLOCK;
-            case BRICK_GUARD -> Material.BRICK;
             default -> Material.PAPER;
         };
     }
@@ -175,7 +166,6 @@ public class CreateRoomMenu extends BaseMenu {
             case END_FLASH -> "§x§B§B§8§8§F§F终§x§D§D§A§A§F§F章 §x§F§F§D§D§A§A· §x§D§D§F§F§C§C闪§x§B§B§F§F§E§E光";
             case CUSTOM -> "§x§F§F§D§7§0§0自§x§F§F§B§B§3§3定§x§F§F§9§9§6§6义§x§F§F§7§7§9§9模§x§F§F§5§5§C§C式";
             case LUCKY_PILLARS -> "§x§F§F§D§D§5§5幸§x§F§F§C§C§6§6运§x§F§F§B§B§7§7之§x§F§F§A§A§8§8柱";
-            case BRICK_GUARD -> "§x§F§F§7§C§0§0板§x§F§F§8§8§1§1砖 §x§D§D§5§5§1§1· §x§9§9§3§3§0§0守§x§6§6§1§9§0§0卫战";
             default -> mode.getDisplayName();
         };
     }
@@ -220,11 +210,6 @@ public class CreateRoomMenu extends BaseMenu {
                 lore.add("§f- §e按配置间隔随机发原版物品");
                 lore.add("§f- §b最后存活者获胜");
             }
-            case BRICK_GUARD -> {
-                lore.add("§f- §6板砖队守核心");
-                lore.add("§f- §c下界砖队推核心");
-                lore.add("§f- §7一局一小时，超时平局");
-            }
             default -> lore.add("§f- §7暂无说明");
         }
         return lore;
@@ -261,8 +246,10 @@ public class CreateRoomMenu extends BaseMenu {
     private ItemStack createInviteHintButton() {
         return createItem(Material.WRITABLE_BOOK,
                 "   §8[§x§5§5§F§F§D§D✉ §x§7§7§F§F§C§C邀§x§9§9§F§F§B§B请§x§B§B§F§F§A§A提§x§D§D§F§F§9§9示§8]",
-                "§7- 创建完成后可邀请玩家加入",
-                "§7- 只会对仅邀请房间生效");
+                "§8· · · · · · · · · · · · · ·",
+                "§f- §7创建完成后可用下面命令邀请",
+                "§f- §e/gamefunxiao hg invite <玩家>",
+                "§8· · · · · · · · · · · · · ·");
     }
 
     private ItemStack createModifiersButton() {
@@ -337,8 +324,6 @@ public class CreateRoomMenu extends BaseMenu {
             maxPlayers = 64;
         } else if (mode == GameMode.LUCKY_PILLARS) {
             maxPlayers = 16;
-        } else if (mode == GameMode.BRICK_GUARD) {
-            maxPlayers = 16;
         } else {
             maxPlayers = 16;
         }
@@ -409,8 +394,6 @@ public class CreateRoomMenu extends BaseMenu {
             hardMax = 67;
         } else if (selectedMode != null && selectedMode.isLuckyPillars()) {
             hardMax = 32;
-        } else if (selectedMode != null && selectedMode.isBrickGuard()) {
-            hardMax = 32;
         } else {
             hardMax = 20;
         }
@@ -431,7 +414,6 @@ public class CreateRoomMenu extends BaseMenu {
     private void openSectionRoot() {
         switch (menuSection) {
             case LUCKY_PILLARS -> plugin.getMenuManager().openLuckyPillarsMenu(player);
-            case BRICK_GUARD -> plugin.getMenuManager().openBrickGuardMenu(player);
             case GENERIC, HUNTER -> plugin.getMenuManager().openHunterGameMenu(player);
         }
     }

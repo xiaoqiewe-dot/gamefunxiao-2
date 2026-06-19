@@ -16,7 +16,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.Recipe;
 import org.gamefunxiao.GameFunXiao;
 import org.gamefunxiao.server.ChildRoomRegistryEntry;
-import org.gamefunxiao.world.BrickGuardMapManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,8 +69,6 @@ public class RoomManager {
     private String getModeMessageWithPrefix(GameMode mode, String path) {
         return mode != null && mode.isLuckyPillars()
                 ? plugin.getMessageManager().getLuckyPillarsMessageWithPrefix(path)
-                : mode != null && mode.isBrickGuard()
-                ? plugin.getMessageManager().getBrickGuardMessageWithPrefix(path)
                 : mode != null && (mode.isStandaloneMiniGame() || mode.isIndependentMode())
                 ? plugin.getMessageManager().getMiniGameMessageWithPrefix(path)
                 : plugin.getMessageManager().getHunterGameMessageWithPrefix(path);
@@ -80,8 +77,6 @@ public class RoomManager {
     private String getModeMessageWithPrefix(GameMode mode, String path, Map<String, String> placeholders) {
         return mode != null && mode.isLuckyPillars()
                 ? plugin.getMessageManager().getLuckyPillarsMessageWithPrefix(path, placeholders)
-                : mode != null && mode.isBrickGuard()
-                ? plugin.getMessageManager().getBrickGuardMessageWithPrefix(path, placeholders)
                 : mode != null && (mode.isStandaloneMiniGame() || mode.isIndependentMode())
                 ? plugin.getMessageManager().getMiniGameMessageWithPrefix(path, placeholders)
                 : plugin.getMessageManager().getHunterGameMessageWithPrefix(path, placeholders);
@@ -127,12 +122,6 @@ public class RoomManager {
             isPublic = true;
             modifiers = new HashSet<>();
         }
-        if (modifiers == null) {
-            modifiers = new HashSet<>();
-        } else {
-            modifiers = new HashSet<>(modifiers);
-        }
-        String requestedBrickGuardMapId = mode.isBrickGuard() ? extractBrickGuardMapSelector(modifiers) : null;
         String roomId = forcedRoomId != null ? forcedRoomId : generateRoomId();
         boolean isCustom = mode == GameMode.CUSTOM || !modifiers.isEmpty();
 
@@ -151,7 +140,6 @@ public class RoomManager {
 
         org.gamefunxiao.world.MiniGameMapManager.MapDefinition waitingMap = null;
         GameRoom room = new GameRoom(roomId, player.getUniqueId(), mode, maxPlayers, isPublic, modifiers, isCustom);
-        BrickGuardMapManager.MapDefinition brickGuardMap = null;
         if (mode.isMiniGameMapEditableMode() && plugin.getMiniGameMapManager() != null) {
             waitingMap = plugin.getMiniGameMapManager().findUsableMap(mode, Math.max(2, maxPlayers <= 0 ? 2 : maxPlayers));
             if (waitingMap != null) {
@@ -166,41 +154,6 @@ public class RoomManager {
                             null
                     );
                 }
-            }
-        }
-        if (mode.isBrickGuard() && plugin.getBrickGuardMapManager() != null) {
-            brickGuardMap = requestedBrickGuardMapId == null
-                    ? plugin.getBrickGuardMapManager().findUsableMap(Math.max(2, maxPlayers <= 0 ? 2 : maxPlayers))
-                    : plugin.getBrickGuardMapManager().getMapDefinition(requestedBrickGuardMapId);
-            if (brickGuardMap == null) {
-                String targetName = requestedBrickGuardMapId == null ? "当前可用地图" : requestedBrickGuardMapId;
-                player.sendMessage(getModeMessageWithPrefix(mode, "room.brick_guard_map_not_ready",
-                        Map.of("map", targetName, "reason", "当前没有满足人数与元素要求的可用地图")));
-                restorePlayerAfterFailedRoomCreate(player, previousLocation, previousHealth, previousFoodLevel,
-                        previousExpLevel, previousExp, previousPotionEffects, persistSession);
-                return null;
-            }
-            if (brickGuardMap != null) {
-                int targetPlayers = Math.max(2, maxPlayers <= 0 ? 2 : maxPlayers);
-                List<String> reasons = plugin.getBrickGuardMapManager().getUnavailableReasons(brickGuardMap, targetPlayers, true);
-                if (!reasons.isEmpty()) {
-                    player.sendMessage(getModeMessageWithPrefix(mode, "room.brick_guard_map_not_ready",
-                            Map.of("map", brickGuardMap.displayName(), "reason", String.join("、", reasons))));
-                    restorePlayerAfterFailedRoomCreate(player, previousLocation, previousHealth, previousFoodLevel,
-                            previousExpLevel, previousExp, previousPotionEffects, persistSession);
-                    return null;
-                }
-            }
-            if (brickGuardMap != null) {
-                room.setBrickGuardRuntimeSettings(
-                        brickGuardMap.mapId(),
-                        brickGuardMap.displayName(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        brickGuardMap.fakeBorderRadius()
-                );
             }
         }
         // 设置房主的之前位置、血量、饱食度和经验
@@ -227,23 +180,6 @@ public class RoomManager {
                 }
             }
         }
-        if (mode.isBrickGuard() && room.getGameWorld() == null) {
-            BrickGuardMapManager.RuntimeWorlds worlds = plugin.getWorldManager().createBrickGuardWorlds(roomId, brickGuardMap);
-            if (worlds.brickWorld() != null) {
-                room.setGameWorld(worlds.brickWorld());
-                if (brickGuardMap != null) {
-                    room.setBrickGuardRuntimeSettings(
-                            brickGuardMap.mapId(),
-                            brickGuardMap.displayName(),
-                            plugin.getBrickGuardMapManager().getBrickSpawn(brickGuardMap, worlds.brickWorld()),
-                            plugin.getBrickGuardMapManager().getNetherBrickSpawn(brickGuardMap, worlds.netherBrickWorld()),
-                            plugin.getBrickGuardMapManager().getBrickCore(brickGuardMap, worlds.brickWorld()),
-                            plugin.getBrickGuardMapManager().getFakeBorderCenter(brickGuardMap, worlds.brickWorld()),
-                            brickGuardMap.fakeBorderRadius()
-                    );
-                }
-            }
-        }
 
         // 传送玩家到等待大厅
         teleportToLobby(player, room);
@@ -266,54 +202,6 @@ public class RoomManager {
 
         plugin.getChildServerManager().syncRoom(room);
         return room;
-    }
-
-    private String extractBrickGuardMapSelector(Set<String> modifiers) {
-        if (modifiers == null || modifiers.isEmpty()) {
-            return null;
-        }
-        String selected = null;
-        Iterator<String> iterator = modifiers.iterator();
-        while (iterator.hasNext()) {
-            String modifier = iterator.next();
-            if (modifier == null) {
-                continue;
-            }
-            String lower = modifier.toLowerCase(Locale.ROOT);
-            if (lower.startsWith("map:") || lower.startsWith("map=") || lower.startsWith("地图:") || lower.startsWith("地图=")) {
-                int index = modifier.indexOf(':');
-                if (index < 0) {
-                    index = modifier.indexOf('=');
-                }
-                selected = index >= 0 ? modifier.substring(index + 1).trim() : "";
-                iterator.remove();
-            }
-        }
-        if (selected == null || selected.isBlank() || plugin.getBrickGuardMapManager() == null) {
-            return null;
-        }
-        return plugin.getBrickGuardMapManager().normalizeMapId(selected);
-    }
-
-    private void restorePlayerAfterFailedRoomCreate(Player player, Location previousLocation, double previousHealth,
-                                                    int previousFoodLevel, int previousExpLevel, float previousExp,
-                                                    Collection<org.bukkit.potion.PotionEffect> previousPotionEffects,
-                                                    boolean persistSession) {
-        if (player == null) {
-            return;
-        }
-        restorePlayerInventory(player);
-        if (previousLocation != null) {
-            player.teleport(previousLocation);
-        }
-        player.setHealth(Math.min(previousHealth, player.getMaxHealth()));
-        player.setFoodLevel(previousFoodLevel);
-        player.setLevel(previousExpLevel);
-        player.setExp(previousExp);
-        player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
-        if (previousPotionEffects != null) {
-            previousPotionEffects.forEach(player::addPotionEffect);
-        }
     }
 
     public void quickMatch(Player player, String modeId) {
@@ -419,7 +307,7 @@ public class RoomManager {
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.85f, 1.0f);
                 return false;
             }
-            if ((room.getGameMode().isFlashLike() || room.getGameMode().isLuckyPillars() || room.getGameMode().isBrickGuard() || room.getGameMode().isStandaloneMiniGame())
+            if ((room.getGameMode().isFlashLike() || room.getGameMode().isLuckyPillars() || room.getGameMode().isStandaloneMiniGame())
                     && (room.getState() == RoomState.PLAYING || room.getState() == RoomState.SELECTING)) {
                 spectateRoom(player, room);
             } else {
@@ -1162,9 +1050,6 @@ public class RoomManager {
     public void deleteRoom(String roomId) {
         GameRoom room = rooms.remove(roomId);
         if (room != null) {
-            if (room.getGameMode().isBrickGuard()) {
-                plugin.getBrickGuardManager().removeSession(roomId);
-            }
             keepEndingChatIsolation(room, 120_000L);
             // 清除所有玩家的房间记录
             for (UUID uuid : room.getAllPlayerUUIDs()) {
@@ -1709,15 +1594,6 @@ public class RoomManager {
         if (mode == GameMode.SWAP) {
             return 3;
         }
-        if (mode != null && mode.isBrickGuard()) {
-            if (plugin.getBrickGuardMapManager() != null) {
-                BrickGuardMapManager.MapDefinition definition = plugin.getBrickGuardMapManager().findUsableMap(2);
-                if (definition != null) {
-                    return Math.max(2, definition.minPlayers());
-                }
-            }
-            return 2;
-        }
         if (mode == GameMode.TNT_RUN || mode == GameMode.BLOCK_PARTY) {
             org.bukkit.configuration.file.FileConfiguration cfg = plugin.getConfigManager().getConfig("minigames");
             String modePath = mode == GameMode.TNT_RUN ? "tnt_run" : "block_party";
@@ -1974,10 +1850,6 @@ public class RoomManager {
             player.setPlayerListName(null);
             return;
         }
-        if (room != null && room.getGameMode() == GameMode.BRICK_GUARD) {
-            player.setPlayerListName(formatGradientRoomId(roomId) + " " + plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()) + "§f" + player.getName());
-            return;
-        }
         if (room != null && room.getGameMode().isIndependentMode()) {
             String gradientRoomId = formatGradientRoomId(roomId);
             String label = normalizeRoleLabel(roleLabel, "参赛", 18);
@@ -2020,12 +1892,6 @@ public class RoomManager {
             if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
                 setRoleNameTag(p, room.getRoomId(), false, "");
                 updatePlayerTabNameWithRole(p, room.getRoomId(), false, "");
-                continue;
-            }
-            if (room.getGameMode() == GameMode.BRICK_GUARD) {
-                String label = plugin.getBrickGuardManager().getRoleLabel(room, uuid);
-                setRoleNameTag(p, room.getRoomId(), false, label);
-                updatePlayerTabNameWithRole(p, room.getRoomId(), false, label);
                 continue;
             }
             if (room.getGameMode().isIndependentMode()) {
@@ -2072,16 +1938,6 @@ public class RoomManager {
                     } else {
                         setRoleNameTag(player, room.getRoomId(), false, "");
                         updatePlayerTabNameWithRole(player, room.getRoomId(), false, "");
-                    }
-                    continue;
-                }
-                if (room.getGameMode() == GameMode.BRICK_GUARD) {
-                    if (room.isSpectator(uuid) || plugin.getBrickGuardManager().isEliminated(room, uuid)) {
-                        setSpectatorNameTag(player, room.getRoomId());
-                    } else {
-                        String label = plugin.getBrickGuardManager().getRoleLabel(room, uuid);
-                        setRoleNameTag(player, room.getRoomId(), false, label);
-                        updatePlayerTabNameWithRole(player, room.getRoomId(), false, label);
                     }
                     continue;
                 }
@@ -2202,38 +2058,6 @@ public class RoomManager {
                     team.addEntry(player.getName());
                 }
             }
-            return;
-        }
-        if (room != null && room.getGameMode() == GameMode.BRICK_GUARD) {
-            String teamName = "gf_bg_" + player.getName();
-            if (teamName.length() > 16) teamName = teamName.substring(0, 16);
-            clearRoleNameTag(player);
-            java.util.Set<java.util.UUID> allPlayers = new java.util.HashSet<>();
-            allPlayers.addAll(room.getAllPlayerUUIDs());
-            allPlayers.addAll(room.getSpectators());
-            String prefix = plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()).replace("§r", "") + "§r";
-            org.bukkit.ChatColor teamColor = roleLabel != null && roleLabel.contains("下界") ? ChatColor.DARK_RED
-                    : roleLabel != null && roleLabel.contains("濒死") ? ChatColor.LIGHT_PURPLE
-                    : roleLabel != null && roleLabel.contains("旁观") ? ChatColor.GRAY
-                    : ChatColor.GOLD;
-            for (java.util.UUID uuid : allPlayers) {
-                org.bukkit.entity.Player viewer = org.bukkit.Bukkit.getPlayer(uuid);
-                if (viewer == null || !viewer.isOnline()) continue;
-                org.bukkit.scoreboard.Scoreboard scoreboard = viewer.getScoreboard();
-                if (scoreboard == null || scoreboard == org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard()) {
-                    scoreboard = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
-                }
-                org.bukkit.scoreboard.Team team = scoreboard.getTeam(teamName);
-                if (team == null) {
-                    team = scoreboard.registerNewTeam(teamName);
-                }
-                team.setPrefix(prefix);
-                team.setColor(teamColor);
-                if (!team.hasEntry(player.getName())) {
-                    team.addEntry(player.getName());
-                }
-            }
-            player.setPlayerListName(formatGradientRoomId(roomId) + " " + plugin.getBrickGuardManager().getTabPrefix(room, player.getUniqueId()) + "§f" + player.getName());
             return;
         }
         if (room != null && room.getGameMode().isIndependentMode()) {

@@ -37,7 +37,6 @@ public class MainNavigationMenu extends BaseMenu {
         inventory.setItem(8, createShopButton());
         inventory.setItem(20, createHunterGameButton());
         inventory.setItem(22, createLuckyPillarsButton());
-        inventory.setItem(24, createBrickGuardButton());
         inventory.setItem(44, createSettingsButton());
 
         // 关闭按钮
@@ -78,21 +77,6 @@ public class MainNavigationMenu extends BaseMenu {
             lore.add("§f- §7普通模式和 PVP 大佬也在它自己的菜单里");
             lore.add("§8· · · · · · · · · · · · · ·");
             lore.add("§f- §a点击进入");
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-        return item;
-    }
-
-    private ItemStack createBrickGuardButton() {
-        ItemStack item = new ItemStack(Material.BRICK);
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            meta.setDisplayName("§x§f§f§7§c§0§0板砖 · 守卫战");
-            List<String> lore = new ArrayList<>();
-            lore.add("§7- 我无法介绍");
-            lore.add("§7- 但你必须破坏对面的核心你才能获得胜利");
-            lore.add("§7- 板砖队 对 下界砖队");
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
@@ -158,11 +142,6 @@ public class MainNavigationMenu extends BaseMenu {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 0.62f, 1.72f);
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.35f, 1.8f);
                 plugin.getMenuManager().openLuckyPillarsMenu(player);
-            }
-            case 24 -> {
-                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_COPPER_BULB_TURN_ON, 0.72f, 0.75f);
-                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_GRINDSTONE_USE, 0.48f, 1.25f);
-                plugin.getMenuManager().openBrickGuardMenu(player);
             }
             case 44 -> {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 0.8f, 1.45f);

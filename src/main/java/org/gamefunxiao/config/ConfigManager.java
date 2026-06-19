@@ -58,9 +58,6 @@ public class ConfigManager {
         // 加载小游戏独立地图配置
         loadConfig("minigame-maps");
 
-        // 加载板砖守卫战地图配置
-        loadConfig("brick-guard-maps");
-
         // 加载自动生成竞技场小游戏配置
         loadConfig("minigames");
 
@@ -170,10 +167,6 @@ public class ConfigManager {
 
     public String getLuckyPillarsPrefix() {
         return config.getString("lucky_pillars_prefix", "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱 §x§F§F§D§D§5§5» §f");
-    }
-
-    public String getBrickGuardPrefix() {
-        return config.getString("brick_guard_prefix", "§x§F§F§7§C§0§0▣ §x§F§F§8§6§0§0板§x§F§F§9§0§0§0砖§x§D§D§6§6§0§0守§x§B§B§4§4§0§0卫§x§9§9§2§2§0§0战 §x§F§F§7§C§0§0>> §f");
     }
 
     public String getMiniGameCurrencyName() {

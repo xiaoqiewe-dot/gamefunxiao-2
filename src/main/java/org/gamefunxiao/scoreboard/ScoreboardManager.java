@@ -132,7 +132,7 @@ public class ScoreboardManager {
         List<String> lines = new ArrayList<>();
         String configSection = "waiting";
         switch (state) {
-            case WAITING, STARTING -> lines = getWaitingLines(room, player);
+            case WAITING, STARTING -> lines = getWaitingLines(room);
             case SELECTING -> {
                 configSection = "selecting";
                 lines = getSelectingLines(room);
@@ -168,8 +168,6 @@ public class ScoreboardManager {
         Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
         String title = room.getGameMode().isLuckyPillars()
                 ? "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱"
-                : room.getGameMode().isBrickGuard()
-                ? "§x§F§F§7§C§0§0板砖守卫战"
                 : color(plugin.getConfigManager().getScoreboardTitle());
         if (objective == null) {
             objective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", title);
@@ -287,12 +285,9 @@ public class ScoreboardManager {
     /**
      * 等待大厅 + 倒计时阶段的记分板
      */
-    private List<String> getWaitingLines(GameRoom room, Player viewer) {
+    private List<String> getWaitingLines(GameRoom room) {
         if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
             return getLuckyPillarsWaitingLines(room);
-        }
-        if (room.getGameMode() == GameMode.BRICK_GUARD) {
-            return getBrickGuardWaitingLines(room, viewer);
         }
         List<String> lines = new ArrayList<>();
 
@@ -510,9 +505,6 @@ public class ScoreboardManager {
         if (room.getGameMode().isLuckyPillars()) {
             return getLuckyPillarsPlayingLines(room);
         }
-        if (room.getGameMode().isBrickGuard()) {
-            return getBrickGuardPlayingLines(room, viewer);
-        }
         if (room.getGameMode().isIndependentMode()) {
             return getIndependentModePlayingLines(room);
         }
@@ -673,31 +665,6 @@ public class ScoreboardManager {
         return lines;
     }
 
-    private List<String> getBrickGuardWaitingLines(GameRoom room, Player viewer) {
-        List<String> lines = new ArrayList<>();
-        lines.add("§7房间: §f" + room.getRoomId());
-        lines.add("§7地图: §f" + room.getBrickGuardMapName());
-        lines.add("§7板砖: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-        lines.add("§7下界: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-        String selection = viewer == null ? "§7未选择" : plugin.getBrickGuardManager().getViewerTeamDisplay(room, viewer.getUniqueId());
-        lines.add("§7你的选择: §f" + selection);
-        lines.add("§7开始: §f" + (room.getState() == RoomState.STARTING ? formatCountdown(room.getCountdown()) : "等待中"));
-        return lines;
-    }
-
-    private List<String> getBrickGuardPlayingLines(GameRoom room, Player viewer) {
-        List<String> lines = new ArrayList<>();
-        lines.add("§7时间: §f" + formatCountdown((int) plugin.getBrickGuardManager().getRemainingTimeSeconds(room)));
-        lines.add("§7核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§f" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-        lines.add("§7下界核心: §f" + plugin.getBrickGuardManager().getCorePlayerName(room));
-        lines.add("§7板砖击杀: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.BRICK));
-        lines.add("§7下界击杀: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.NETHER));
-        lines.add("§7你的队伍: §f" + plugin.getBrickGuardManager().getViewerTeamDisplay(room, viewer.getUniqueId()));
-        lines.add("§7你的身份: §f" + plugin.getBrickGuardManager().getViewerIdentityDisplay(room, viewer.getUniqueId()));
-        lines.add("§7重生: §f" + (plugin.getBrickGuardManager().isEliminated(room, viewer.getUniqueId()) ? "已出局" : plugin.getBrickGuardManager().isDying(room, viewer.getUniqueId()) ? "濒死中" : "战斗中"));
-        return lines;
-    }
-
     /**
      * 获取前N名猎人（按距离+伤害排序）
      */
@@ -838,7 +805,6 @@ public class ScoreboardManager {
             case FLASH_TOURNAMENT -> "§x§F§F§F§F§9§9闪§x§F§F§D§D§5§5光 §c§l赛事";
             case END_FLASH -> "§x§B§B§8§8§F§F终§x§D§D§A§A§F§F章§x§F§F§D§D§8§8·§x§F§F§F§F§A§A闪§x§D§D§F§F§C§C光"; // 终章渐变
             case LUCKY_PILLARS -> "§x§F§F§D§D§5§5幸§x§F§F§C§C§6§6运§x§F§F§B§B§7§7之§x§F§F§A§A§8§8柱";
-            case BRICK_GUARD -> "§x§F§F§7§C§0§0板§x§F§F§9§0§2§0砖§x§D§D§5§5§1§1守§x§9§9§3§3§0§0卫§x§6§6§1§9§0§0战";
             case LUCKY_PILLARS_PVP -> "§x§F§F§8§8§5§5幸§x§F§F§A§A§6§6运§x§F§F§C§C§7§7之§x§F§F§E§E§8§8柱§x§F§F§6§6§6§6PVP";
             case TNT_RUN -> "§x§F§F§8§8§5§5T§x§F§F§9§9§6§6N§x§F§F§A§A§7§7T§x§F§F§B§B§8§8跑§x§F§F§C§C§9§9酷";
             case BLOCK_PARTY -> "§x§D§D§8§8§F§F方§x§C§C§9§9§F§F块§x§B§B§A§A§F§F派§x§A§A§B§B§F§F对";
@@ -909,13 +875,6 @@ public class ScoreboardManager {
             lines.add("§7");
             lines.add("§8LuckyPillars.classic");
             lines.add("§7");
-            return lines;
-        }
-        if (room.getGameMode().isBrickGuard()) {
-            lines.add("§7胜方: §f" + plugin.getBrickGuardManager().getEndedSummary(room));
-            lines.add("§7板砖击杀: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.BRICK));
-            lines.add("§7下界击杀: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.NETHER));
-            lines.add("§7用时: §f" + formatElapsedTime(Math.max(0L, System.currentTimeMillis() - room.getGameStartTime())));
             return lines;
         }
 
