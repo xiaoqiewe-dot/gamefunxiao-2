@@ -2929,8 +2929,6 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        plugin.getBrickGuardManager().handleInventoryClick(event, player, room);
-
         if (plugin.getFlashModeManager().handleFlashBackpackInventoryClick(event, player, room)) {
             return;
         }
