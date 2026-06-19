@@ -276,6 +276,10 @@ public class GameManager {
             giveLuckyPillarsLobbyItems(player, room);
             return;
         }
+        if (room != null && room.getGameMode().isBrickGuard()) {
+            plugin.getBrickGuardManager().giveLobbyItems(player, room);
+            return;
+        }
         if (room != null && room.getGameMode().isStandaloneMiniGame()) {
             giveStandaloneMiniGameLobbyItems(player, room);
             return;
@@ -760,7 +764,7 @@ public class GameManager {
                     if (room.getGameMode().isLuckyPillars()) {
                         startLuckyPillars(room);
                     } else if (room.getGameMode().isBrickGuard()) {
-                        startBrickGuard(room);
+                        plugin.getBrickGuardManager().start(room);
                     } else if (room.getGameMode() == GameMode.TNT_RUN) {
                         startTntRun(room);
                     } else if (room.getGameMode() == GameMode.BLOCK_PARTY) {
@@ -4492,7 +4496,7 @@ public class GameManager {
             return;
         }
         if (room.getGameMode().isBrickGuard()) {
-            startBrickGuard(room);
+            plugin.getBrickGuardManager().start(room);
             return;
         }
         if (room.getGameMode().isStandaloneMiniGame()) {
