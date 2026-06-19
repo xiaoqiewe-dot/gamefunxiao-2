@@ -506,6 +506,9 @@ public class BrickGuardManager {
 
         Player killer = player.getKiller();
         if (killer != null && room.getAllPlayerUUIDs().contains(killer.getUniqueId())) {
+            room.broadcast(plugin.getConfigManager().getBrickGuardPrefix() + formatBrickGuardDeathMessage(player, killer));
+        }
+        if (killer != null && room.getAllPlayerUUIDs().contains(killer.getUniqueId())) {
             session.kills.merge(killer.getUniqueId(), 1, Integer::sum);
             if (isBrickTeam(room, killer.getUniqueId())) {
                 restoreFoxPickDurability(killer);
@@ -763,6 +766,19 @@ public class BrickGuardManager {
         return session == null ? 0 : session.dyingPlayers.size();
     }
 
+    public int getKillCount(GameRoom room, TeamSide side) {
+        Session session = sessionOf(room);
+        if (session == null || side == null) {
+            return 0;
+        }
+        Set<UUID> source = side == TeamSide.BRICK ? session.brickTeam : session.netherTeam;
+        int total = 0;
+        for (UUID uuid : source) {
+            total += session.kills.getOrDefault(uuid, 0);
+        }
+        return total;
+    }
+
     public long getRemainingTimeSeconds(GameRoom room) {
         Session session = sessionOf(room);
         if (session == null || session.startTimeMillis <= 0L) {
@@ -817,6 +833,43 @@ public class BrickGuardManager {
             return "濒死";
         }
         return session.brickTeam.contains(uuid) ? BRICK_TEAM_NAME : session.netherTeam.contains(uuid) ? NETHER_TEAM_NAME : "未选队";
+    }
+
+    public String getViewerTeamDisplay(GameRoom room, UUID uuid) {
+        if (room == null || uuid == null) {
+            return "§7未选择";
+        }
+        Session session = getOrCreateSession(room);
+        if (session.brickTeam.contains(uuid)) {
+            return BRICK_TEAM_DISPLAY;
+        }
+        if (session.netherTeam.contains(uuid)) {
+            return NETHER_TEAM_DISPLAY;
+        }
+        return "§7未选择";
+    }
+
+    public String getViewerIdentityDisplay(GameRoom room, UUID uuid) {
+        if (room == null || uuid == null) {
+            return "§7未选择";
+        }
+        Session session = getOrCreateSession(room);
+        if (room.isSpectator(uuid) || isEliminated(session, uuid)) {
+            return "§7[旁观]";
+        }
+        if (uuid.equals(session.corePlayer)) {
+            return "§x§6§6§1§9§0§0[核心]";
+        }
+        if (session.dyingPlayers.containsKey(uuid)) {
+            return "§x§D§D§8§8§F§F[濒死]";
+        }
+        if (session.brickTeam.contains(uuid)) {
+            return "§x§F§F§7§C§0§0[板砖队]";
+        }
+        if (session.netherTeam.contains(uuid)) {
+            return "§x§6§6§1§9§0§0[下界砖队]";
+        }
+        return "§7未选择";
     }
 
     public String getTabPrefix(GameRoom room, UUID uuid) {
@@ -1511,11 +1564,21 @@ public class BrickGuardManager {
     private Merchant createVillagerMerchant() {
         Merchant merchant = Bukkit.createMerchant("板砖商人");
         merchant.setRecipes(List.of(
-                recipe(createNamedItem(Material.IRON_SWORD, "§x§F§F§7§C§0§0板砖短剑"), ingredient(Material.BRICK, 18), ingredient(Material.DIAMOND, 2)),
-                recipe(new ItemStack(Material.CROSSBOW), ingredient(Material.BRICK, 22), ingredient(Material.DIAMOND, 2)),
-                recipe(new ItemStack(Material.COOKED_BEEF, 12), ingredient(Material.BRICK, 8)),
-                recipe(new ItemStack(Material.BRICKS, 32), ingredient(Material.BRICK, 12)),
-                recipe(new ItemStack(Material.IRON_CHESTPLATE), ingredient(Material.BRICK, 26), ingredient(Material.DIAMOND, 4))
+                recipe(createNamedItem(Material.IRON_SWORD, "§x§F§F§7§C§0§0天气狐短剑",
+                        "§7- 一把赶工赶出来的近战家伙",
+                        "§7- 适合先把对面敲出无法计算的损失"), ingredient(Material.BRICK, 18), ingredient(Material.DIAMOND, 2)),
+                recipe(createNamedItem(Material.CROSSBOW, "§x§F§F§7§C§0§0公司连弩",
+                        "§7- 狐狸工位边上顺走的远程火力",
+                        "§7- 先远点压住再搬砖"), ingredient(Material.BRICK, 22), ingredient(Material.DIAMOND, 2)),
+                recipe(createNamedItem(Material.COOKED_BEEF, "§x§F§F§7§C§0§0板砖便当",
+                        "§7- 搬砖前先垫两口",
+                        "§7- 不然今天又要报损"), ingredient(Material.BRICK, 8)),
+                recipe(createNamedItem(Material.BRICKS, "§x§F§F§7§C§0§0搬砖补给",
+                        "§7- 公司让你自己垒掩体",
+                        "§7- 省着点放"), ingredient(Material.BRICK, 12)),
+                recipe(createNamedItem(Material.IRON_CHESTPLATE, "§x§F§F§7§C§0§0云灵狐工装",
+                        "§7- 穿上就该认真干活了",
+                        "§7- 至少别让核心先出事"), ingredient(Material.BRICK, 26), ingredient(Material.DIAMOND, 4))
         ));
         return merchant;
     }
@@ -1523,10 +1586,18 @@ public class BrickGuardManager {
     private Merchant createPiglinMerchant() {
         Merchant merchant = Bukkit.createMerchant("下界商旅");
         merchant.setRecipes(List.of(
-                recipe(createNamedItem(Material.IRON_SWORD, "§x§6§6§1§9§0§0下界短剑"), ingredient(Material.GOLD_NUGGET, 18), ingredient(Material.GLOWSTONE_DUST, 8)),
-                recipe(new ItemStack(Material.CROSSBOW), ingredient(Material.GOLD_NUGGET, 20), ingredient(Material.GLOWSTONE_DUST, 10)),
-                recipe(new ItemStack(findMaterial("NETHERITE_PICKAXE", Material.DIAMOND_PICKAXE)), ingredient(Material.GOLD_NUGGET, 28), ingredient(Material.GLOWSTONE_DUST, 14)),
-                recipe(new ItemStack(Material.NETHER_BRICKS, 32), ingredient(Material.GOLD_NUGGET, 10), ingredient(Material.GLOWSTONE_DUST, 6)),
+                recipe(createNamedItem(Material.IRON_SWORD, "§x§6§6§1§9§0§0赤契短剑",
+                        "§7- 下界契约里常见的近战武器",
+                        "§7- 出手够狠就够用了"), ingredient(Material.GOLD_NUGGET, 18), ingredient(Material.GLOWSTONE_DUST, 8)),
+                recipe(createNamedItem(Material.CROSSBOW, "§x§6§6§1§9§0§0猪灵重弩",
+                        "§7- 用来守着核心人周围",
+                        "§7- 别让对面摸过来"), ingredient(Material.GOLD_NUGGET, 20), ingredient(Material.GLOWSTONE_DUST, 10)),
+                recipe(createNamedItem(findMaterial("NETHERITE_PICKAXE", Material.DIAMOND_PICKAXE), "§x§6§6§1§9§0§0熔炉镐",
+                        "§7- 能挖也能压制对面",
+                        "§7- 该推进的时候别客气"), ingredient(Material.GOLD_NUGGET, 28), ingredient(Material.GLOWSTONE_DUST, 14)),
+                recipe(createNamedItem(Material.NETHER_BRICKS, "§x§6§6§1§9§0§0下界砖补给",
+                        "§7- 用来垒掩体和堵口子",
+                        "§7- 守核心别手软"), ingredient(Material.GOLD_NUGGET, 10), ingredient(Material.GLOWSTONE_DUST, 6)),
                 recipe(createSpecialSnack(4), ingredient(Material.GOLD_NUGGET, 6), ingredient(Material.GLOWSTONE_DUST, 3))
         ));
         return merchant;
@@ -1637,6 +1708,7 @@ public class BrickGuardManager {
     }
 
     private void broadcastBrickCoreUnderAttack(GameRoom room) {
+        room.broadcast(plugin.getMessageManager().getBrickGuardMessageWithPrefix("brick_guard.core_under_attack"));
         for (UUID uuid : room.getAllPlayerUUIDs()) {
             if (!isBrickTeam(room, uuid)) {
                 continue;
@@ -1919,11 +1991,38 @@ public class BrickGuardManager {
         return new ItemStack(material, amount);
     }
 
-    private ItemStack createNamedItem(Material material, String name) {
+    private String formatBrickGuardDeathMessage(Player victim, Player killer) {
+        String victimName = victim == null ? "未知" : victim.getName();
+        String killerName = killer == null ? "未知" : killer.getName();
+        ItemStack weapon = killer == null ? null : killer.getInventory().getItemInMainHand();
+        Material type = weapon == null ? Material.AIR : weapon.getType();
+        if (isFoxPick(weapon) || (type != null && type.name().endsWith("_PICKAXE"))) {
+            return "§f" + victimName + " §7被 §f" + killerName + " §7的稿子挖碎了！";
+        }
+        String typeName = type == null ? "" : type.name();
+        if (typeName.contains("SPEAR") || type == Material.TRIDENT) {
+            return "§f" + victimName + " §7被 §f" + killerName + " §7的长矛贯穿了！";
+        }
+        if (type == Material.CROSSBOW) {
+            return "§f" + victimName + " §7被 §f" + killerName + " §7一弩钉倒了！";
+        }
+        if (typeName.contains("AXE")) {
+            return "§f" + victimName + " §7被 §f" + killerName + " §7一斧砸翻了！";
+        }
+        if (typeName.contains("SWORD")) {
+            return "§f" + victimName + " §7被 §f" + killerName + " §7一剑放倒了！";
+        }
+        return "§f" + victimName + " §7被 §f" + killerName + " §7解决了！";
+    }
+
+    private ItemStack createNamedItem(Material material, String name, String... lore) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(name);
+            if (lore != null && lore.length > 0) {
+                meta.setLore(List.of(lore));
+            }
             item.setItemMeta(meta);
         }
         return item;
@@ -1945,11 +2044,9 @@ public class BrickGuardManager {
             TeamSide side = getSelectedTeam(room, player.getUniqueId());
             meta.setDisplayName("§x§F§F§7§C§0§0队伍指南针");
             meta.setLore(List.of(
-                    "§8· · · · · · · · · · · · · ·",
-                    "§f- §7当前选择: " + (side == TeamSide.BRICK ? BRICK_TEAM_DISPLAY : side == TeamSide.NETHER ? NETHER_TEAM_DISPLAY : "§7未选择"),
-                    "§f- §a右键打开队伍选择界面",
-                    "§f- §7板砖: §e" + getBrickTeamCount(room) + " §8| §7下界: §e" + getNetherTeamCount(room),
-                    "§8· · · · · · · · · · · · · ·"));
+                    "§7- 当前选择: " + (side == TeamSide.BRICK ? BRICK_TEAM_DISPLAY : side == TeamSide.NETHER ? NETHER_TEAM_DISPLAY : "§7未选择"),
+                    "§7- 右键打开队伍选择",
+                    "§7- 板砖: §e" + getBrickTeamCount(room) + " §8| §7下界: §e" + getNetherTeamCount(room)));
             meta.setCustomModelData(TEAM_SELECTOR_MODEL);
             item.setItemMeta(meta);
         }

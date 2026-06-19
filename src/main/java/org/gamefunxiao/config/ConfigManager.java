@@ -173,7 +173,7 @@ public class ConfigManager {
     }
 
     public String getBrickGuardPrefix() {
-        return config.getString("brick_guard_prefix", "§x§F§F§7§C§0§0▣ §x§F§F§8§B§2§2板§x§F§F§9§A§4§4砖§x§C§C§5§8§2§2守§x§9§9§3§6§1§1卫§x§6§6§1§9§0§0战 §x§F§F§7§C§0§0» §f");
+        return config.getString("brick_guard_prefix", "§x§F§F§7§C§0§0▣ §x§F§F§8§6§0§0板§x§F§F§9§0§0§0砖§x§D§D§6§6§0§0守§x§B§B§4§4§0§0卫§x§9§9§2§2§0§0战 §x§F§F§7§C§0§0>> §f");
     }
 
     public String getMiniGameCurrencyName() {

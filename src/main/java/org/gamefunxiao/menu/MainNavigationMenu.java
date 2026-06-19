@@ -90,14 +90,9 @@ public class MainNavigationMenu extends BaseMenu {
         if (meta != null) {
             meta.setDisplayName("§x§f§f§7§c§0§0板砖 · 守卫战");
             List<String> lore = new ArrayList<>();
-            lore.add("§8· · · · · · · · · · · · · ·");
             lore.add("§7- 我无法介绍");
             lore.add("§7- 但你必须破坏对面的核心你才能获得胜利");
-            lore.add("§8· · · · · · · · · · · · · ·");
-            lore.add("§f- §6独立玩法分区");
-            lore.add("§f- §c板砖队 §7vs §x§6§6§1§9§0§0下界砖队");
-            lore.add("§8· · · · · · · · · · · · · ·");
-            lore.add("§f- §a点击进入");
+            lore.add("§7- 板砖队 对 下界砖队");
             meta.setLore(lore);
             item.setItemMeta(meta);
         }

@@ -1313,6 +1313,8 @@ public class PlayerListener implements Listener {
                     ? vanillaDeathMessage
                     : room.getGameMode().isLuckyPillars()
                     ? withLuckyPillarsPrefix(vanillaDeathMessage)
+                    : room.getGameMode().isBrickGuard()
+                    ? withBrickGuardPrefix(vanillaDeathMessage)
                     : withHunterGamePrefix(vanillaDeathMessage);
             broadcastRoomComponent(room, message);
         }
@@ -1810,6 +1812,12 @@ public class PlayerListener implements Listener {
     private Component withLuckyPillarsPrefix(Component message) {
         return LegacyComponentSerializer.legacySection()
                 .deserialize(plugin.getConfigManager().getLuckyPillarsPrefix() + "§r")
+                .append(message);
+    }
+
+    private Component withBrickGuardPrefix(Component message) {
+        return LegacyComponentSerializer.legacySection()
+                .deserialize(plugin.getConfigManager().getBrickGuardPrefix() + "§r")
                 .append(message);
     }
 

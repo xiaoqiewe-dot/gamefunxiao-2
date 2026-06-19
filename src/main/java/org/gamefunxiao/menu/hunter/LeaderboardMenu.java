@@ -65,7 +65,7 @@ public class LeaderboardMenu extends BaseMenu {
                 "§8· · · · · · · · · · · · · ·",
                 switch (menuSection) {
                     case LUCKY_PILLARS -> "§f这里只看幸运之柱玩法自己的数据";
-                    case BRICK_GUARD -> "§f这里只看板砖守卫战自己的对抗数据";
+                    case BRICK_GUARD -> "§f这里只看板砖守卫战对抗数据";
                     case GENERIC, HUNTER -> "§f这里只看猎人玩法自己的数据";
                 },
                 "§8· · · · · · · · · · · · · ·"));
@@ -140,8 +140,8 @@ public class LeaderboardMenu extends BaseMenu {
     private ItemStack createMiniGamePointsButton() {
         if (menuSection == MenuSection.BRICK_GUARD) {
             return createButton(Material.RED_GLAZED_TERRACOTTA, "§x§F§F§7§C§0§0板砖战绩榜",
-                    "§f- §a只统计雨云 · 板砖守卫战",
-                    "§f- §6胜利和参与会计入独立小游戏积分");
+                    "§f- §a只统计板砖守卫战",
+                    "§f- §6胜利和参与都会计入这里");
         }
         return createButton(Material.GOLD_BLOCK, "§x§F§F§D§D§5§5小游戏积分榜",
                 "§f- §a只统计幸运之柱经典模式",

@@ -93,7 +93,7 @@ public class RoomListMenu extends BaseMenu {
                         : "§f当前使用 §b本服建世界后端",
                 switch (menuSection) {
                     case LUCKY_PILLARS -> "§f这里只看幸运之柱经典模式房间";
-                    case BRICK_GUARD -> "§f这里只看雨云 · 板砖守卫战房间";
+                    case BRICK_GUARD -> "§f这里只看板砖守卫战房间";
                     case GENERIC, HUNTER -> "§f这里只看猎人玩法相关房间";
                 },
                 "§8· · · · · · · · · · · · · ·"));

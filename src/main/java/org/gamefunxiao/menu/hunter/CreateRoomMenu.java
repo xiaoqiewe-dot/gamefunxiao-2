@@ -40,7 +40,7 @@ public class CreateRoomMenu extends BaseMenu {
     private static String resolveTitle(MenuSection menuSection) {
         return switch (menuSection) {
             case LUCKY_PILLARS -> "§0§l🍀 幸运之柱 - 创建房间 🍀";
-            case BRICK_GUARD -> "§0§l▣ 板砖守卫战 - 创建房间 ▣";
+            case BRICK_GUARD -> "§0§l创建房间";
             case GENERIC, HUNTER -> "§0§l⚔ 猎人游戏 - 创建房间 ⚔";
         };
     }
@@ -68,14 +68,12 @@ public class CreateRoomMenu extends BaseMenu {
 
         inventory.setItem(4, createTitleItem(getSectionTitleMaterial(),
                 getSectionTitleText(),
-                "§8· · · · · · · · · · · · · ·",
                 switch (menuSection) {
                     case LUCKY_PILLARS -> "§f先选你要开的幸运之柱玩法";
-                    case BRICK_GUARD -> "§f当前分区只创建板砖守卫战房间";
+                    case BRICK_GUARD -> "§f先确认你要开的房间类型";
                     case GENERIC, HUNTER -> "§f先选你要开的猎人玩法";
                 },
-                "§f这个界面里的模式都只属于当前玩法分区",
-                "§8· · · · · · · · · · · · · ·"));
+                menuSection == MenuSection.BRICK_GUARD ? "§f这里会直接进入板砖守卫战房间设置" : "§f这个界面里的模式都只属于当前玩法分区"));
 
         for (int i = 0; i < availableModes.size() && i < MODE_SLOTS.length; i++) {
             inventory.setItem(MODE_SLOTS[i], createModeButton(availableModes.get(i)));
@@ -89,10 +87,8 @@ public class CreateRoomMenu extends BaseMenu {
 
         inventory.setItem(4, createTitleItem(getSectionTitleMaterial(),
                 getSectionTitleText(),
-                "§8· · · · · · · · · · · · · ·",
                 "§f当前模式: §e" + selectedMode.getDisplayName(),
-                "§f继续设置这个玩法房间的基础参数",
-                "§8· · · · · · · · · · · · · ·"));
+                menuSection == MenuSection.BRICK_GUARD ? "§f继续设置房间人数和加入方式" : "§f继续设置这个玩法房间的基础参数"));
 
         inventory.setItem(19, createMaxPlayersButton());
         inventory.setItem(10, createItem(Material.RED_STAINED_GLASS_PANE,
@@ -225,9 +221,9 @@ public class CreateRoomMenu extends BaseMenu {
                 lore.add("§f- §b最后存活者获胜");
             }
             case BRICK_GUARD -> {
-                lore.add("§f- §6两队夺旗升级对抗");
-                lore.add("§f- §c板砖核心方块与下界核心玩家同时存在");
-                lore.add("§f- §7围绕核心方块和核心玩家推进胜负");
+                lore.add("§f- §6板砖队守核心");
+                lore.add("§f- §c下界砖队推核心");
+                lore.add("§f- §7一局一小时，超时平局");
             }
             default -> lore.add("§f- §7暂无说明");
         }
@@ -265,10 +261,8 @@ public class CreateRoomMenu extends BaseMenu {
     private ItemStack createInviteHintButton() {
         return createItem(Material.WRITABLE_BOOK,
                 "   §8[§x§5§5§F§F§D§D✉ §x§7§7§F§F§C§C邀§x§9§9§F§F§B§B请§x§B§B§F§F§A§A提§x§D§D§F§F§9§9示§8]",
-                "§8· · · · · · · · · · · · · ·",
-                "§f- §7创建完成后可用下面命令邀请",
-                "§f- §e/gamefunxiao hg invite <玩家>",
-                "§8· · · · · · · · · · · · · ·");
+                "§7- 创建完成后可邀请玩家加入",
+                "§7- 只会对仅邀请房间生效");
     }
 
     private ItemStack createModifiersButton() {

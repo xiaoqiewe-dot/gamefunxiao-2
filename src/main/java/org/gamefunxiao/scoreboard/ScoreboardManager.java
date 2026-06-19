@@ -132,7 +132,7 @@ public class ScoreboardManager {
         List<String> lines = new ArrayList<>();
         String configSection = "waiting";
         switch (state) {
-            case WAITING, STARTING -> lines = getWaitingLines(room);
+            case WAITING, STARTING -> lines = getWaitingLines(room, player);
             case SELECTING -> {
                 configSection = "selecting";
                 lines = getSelectingLines(room);
@@ -168,6 +168,8 @@ public class ScoreboardManager {
         Objective objective = scoreboard.getObjective(SCOREBOARD_OBJECTIVE);
         String title = room.getGameMode().isLuckyPillars()
                 ? "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱"
+                : room.getGameMode().isBrickGuard()
+                ? "§x§F§F§7§C§0§0板砖守卫战"
                 : color(plugin.getConfigManager().getScoreboardTitle());
         if (objective == null) {
             objective = scoreboard.registerNewObjective(SCOREBOARD_OBJECTIVE, "dummy", title);
@@ -285,12 +287,12 @@ public class ScoreboardManager {
     /**
      * 等待大厅 + 倒计时阶段的记分板
      */
-    private List<String> getWaitingLines(GameRoom room) {
+    private List<String> getWaitingLines(GameRoom room, Player viewer) {
         if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
             return getLuckyPillarsWaitingLines(room);
         }
         if (room.getGameMode() == GameMode.BRICK_GUARD) {
-            return getBrickGuardWaitingLines(room);
+            return getBrickGuardWaitingLines(room, viewer);
         }
         List<String> lines = new ArrayList<>();
 
@@ -509,7 +511,7 @@ public class ScoreboardManager {
             return getLuckyPillarsPlayingLines(room);
         }
         if (room.getGameMode().isBrickGuard()) {
-            return getBrickGuardPlayingLines(room);
+            return getBrickGuardPlayingLines(room, viewer);
         }
         if (room.getGameMode().isIndependentMode()) {
             return getIndependentModePlayingLines(room);
@@ -671,47 +673,28 @@ public class ScoreboardManager {
         return lines;
     }
 
-    private List<String> getBrickGuardWaitingLines(GameRoom room) {
+    private List<String> getBrickGuardWaitingLines(GameRoom room, Player viewer) {
         List<String> lines = new ArrayList<>();
-        lines.add("§7");
-        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
-        lines.add("§f🏷 房间号: §6" + room.getRoomId());
-        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-        lines.add("§7");
-        if (room.getState() == RoomState.STARTING) {
-            lines.add("§f距开始: §e" + formatCountdown(room.getCountdown()));
-        } else {
-            lines.add("§f状态: §6等待更多玩家");
-        }
-        lines.add("§7");
-        lines.add("§e§l规则摘要");
-        lines.add("§f- §6板砖队守护核心方块");
-        lines.add("§f- §c下界队保护核心玩家");
-        lines.add("§f- §e一小时超时平局");
-        lines.add("§7");
-        lines.add("§8BrickGuard.mode");
+        lines.add("§7房间: §f" + room.getRoomId());
+        lines.add("§7地图: §f" + room.getBrickGuardMapName());
+        lines.add("§7板砖: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getBrickTeamCount(room));
+        lines.add("§7下界: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getNetherTeamCount(room));
+        String selection = viewer == null ? "§7未选择" : plugin.getBrickGuardManager().getViewerTeamDisplay(room, viewer.getUniqueId());
+        lines.add("§7你的选择: §f" + selection);
+        lines.add("§7开始: §f" + (room.getState() == RoomState.STARTING ? formatCountdown(room.getCountdown()) : "等待中"));
         return lines;
     }
 
-    private List<String> getBrickGuardPlayingLines(GameRoom room) {
+    private List<String> getBrickGuardPlayingLines(GameRoom room, Player viewer) {
         List<String> lines = new ArrayList<>();
-        lines.add("§7");
-        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
-        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-        lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
-        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-        lines.add("§f☠ 濒死人数: §d" + plugin.getBrickGuardManager().getDyingCount(room));
-        lines.add("§f⌛ 剩余时间: §e" + formatCountdown((int) plugin.getBrickGuardManager().getRemainingTimeSeconds(room)));
-        lines.add("§7");
-        lines.add("§e§l战场提示");
-        lines.add("§f- §6狐稿靠近核心会自动修复");
-        lines.add("§f- §c濒死记得吃下界特色小吃");
-        lines.add("§f- §7核心玩家全局发光");
-        lines.add("§7");
-        lines.add("§8BrickGuard.mode");
+        lines.add("§7时间: §f" + formatCountdown((int) plugin.getBrickGuardManager().getRemainingTimeSeconds(room)));
+        lines.add("§7核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§f" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
+        lines.add("§7下界核心: §f" + plugin.getBrickGuardManager().getCorePlayerName(room));
+        lines.add("§7板砖击杀: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.BRICK));
+        lines.add("§7下界击杀: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.NETHER));
+        lines.add("§7你的队伍: §f" + plugin.getBrickGuardManager().getViewerTeamDisplay(room, viewer.getUniqueId()));
+        lines.add("§7你的身份: §f" + plugin.getBrickGuardManager().getViewerIdentityDisplay(room, viewer.getUniqueId()));
+        lines.add("§7重生: §f" + (plugin.getBrickGuardManager().isEliminated(room, viewer.getUniqueId()) ? "已出局" : plugin.getBrickGuardManager().isDying(room, viewer.getUniqueId()) ? "濒死中" : "战斗中"));
         return lines;
     }
 
@@ -929,16 +912,10 @@ public class ScoreboardManager {
             return lines;
         }
         if (room.getGameMode().isBrickGuard()) {
-            lines.add("§x§F§F§7§C§0§0▣ §6§l板砖守卫战已结束");
-            lines.add("§7");
-            lines.add("§f结果: §e" + plugin.getBrickGuardManager().getEndedSummary(room));
-            lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-            lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-            lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
-            lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-            lines.add("§7");
-            lines.add("§8BrickGuard.mode");
-            lines.add("§7");
+            lines.add("§7胜方: §f" + plugin.getBrickGuardManager().getEndedSummary(room));
+            lines.add("§7板砖击杀: §x§F§F§7§C§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.BRICK));
+            lines.add("§7下界击杀: §x§6§6§1§9§0§0" + plugin.getBrickGuardManager().getKillCount(room, org.gamefunxiao.game.BrickGuardManager.TeamSide.NETHER));
+            lines.add("§7用时: §f" + formatElapsedTime(Math.max(0L, System.currentTimeMillis() - room.getGameStartTime())));
             return lines;
         }
 

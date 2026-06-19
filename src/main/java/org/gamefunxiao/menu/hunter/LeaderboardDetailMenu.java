@@ -290,8 +290,8 @@ public class LeaderboardDetailMenu extends BaseMenu {
             lore.add("§f- §a这里只统计幸运之柱经典模式");
             lore.add("§f- §7不会混入猎人玩法数据");
         } else if (menuSection == MenuSection.BRICK_GUARD) {
-            lore.add("§f- §a这里只统计雨云 · 板砖守卫战");
-            lore.add("§f- §7核心摧毁和击杀数据按本玩法独立统计");
+            lore.add("§f- §a这里只统计板砖守卫战");
+            lore.add("§f- §7核心摧毁和击杀数据都在这里");
         } else {
             lore.add("§f- §a这里只统计当前猎人玩法分区的数据");
             lore.add("§f- §7不会和小游戏积分串一起");

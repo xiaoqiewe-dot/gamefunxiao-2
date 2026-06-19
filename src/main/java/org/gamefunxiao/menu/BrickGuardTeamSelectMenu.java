@@ -20,23 +20,35 @@ public class BrickGuardTeamSelectMenu extends BaseMenu {
     private final GameRoom room;
 
     public BrickGuardTeamSelectMenu(GameFunXiao plugin, Player player, GameRoom room) {
-        super(plugin, player, "§0§l▣ 板砖守卫战 - 选择队伍 ▣", 27);
+        super(plugin, player, "§0§l队伍选择", 27);
         this.room = room;
     }
 
     @Override
     protected void setupItems() {
         inventory.clear();
-        fillMiFanBorder();
+        fillTeamFrame();
         inventory.setItem(4, createTitleItem(Material.COMPASS,
-                "§x§F§F§7§C§0§0▣ §x§F§F§9§0§2§0队§x§F§F§A§4§4§0伍§x§C§C§5§0§2§0选§x§6§6§1§9§0§0择",
-                "§8· · · · · · · · · · · · · ·",
-                "§f- §7开局尽量两边人数接近",
-                "§f- §a允许相差 1~2 人",
-                "§8· · · · · · · · · · · · · ·"));
+                "§x§F§F§7§C§0§0板砖守卫战",
+                "§7- 请选择你要加入的队伍"));
         inventory.setItem(11, createTeamButton(BrickGuardManager.TeamSide.BRICK));
         inventory.setItem(15, createTeamButton(BrickGuardManager.TeamSide.NETHER));
-        inventory.setItem(22, createBackButton());
+        inventory.setItem(22, createPlainCloseButton());
+    }
+
+    private void fillTeamFrame() {
+        for (int slot = 0; slot < inventory.getSize(); slot++) {
+            int row = slot / 9;
+            int col = slot % 9;
+            boolean border = row == 0 || row == 2 || col == 0 || col == 8;
+            if (!border) {
+                continue;
+            }
+            Material material = (slot == 0 || slot == 8 || slot == 18 || slot == 26)
+                    ? Material.RED_STAINED_GLASS_PANE
+                    : Material.BLACK_STAINED_GLASS_PANE;
+            inventory.setItem(slot, createItem(material, "§8你看我干什么", "§7虽然你点我也没有用ewe"));
+        }
     }
 
     private ItemStack createTeamButton(BrickGuardManager.TeamSide side) {
@@ -50,9 +62,8 @@ public class BrickGuardTeamSelectMenu extends BaseMenu {
             meta.setDisplayName(brick ? "§x§F§F§7§C§0§0板砖队" : "§x§6§6§1§9§0§0下界砖队");
             List<String> lore = new ArrayList<>();
             List<String> names = plugin.getBrickGuardManager().getTeamPreviewNames(room, side, 5);
-            lore.add("§8· · · · · · · · · · · · · ·");
-            lore.add("§f- §7当前人数: §e" + amount);
-            lore.add("§f- §7随机展示 5 名队员:");
+            lore.add("§7- 当前人数: §e" + amount);
+            lore.add("§7- 队内玩家:");
             if (names.isEmpty()) {
                 lore.add("§8  - 暂无玩家");
             } else {
@@ -61,8 +72,7 @@ public class BrickGuardTeamSelectMenu extends BaseMenu {
                 }
             }
             BrickGuardManager.TeamSide selected = plugin.getBrickGuardManager().getSelectedTeam(room, player.getUniqueId());
-            lore.add(selected == side ? "§f- §a你当前就在这支队伍" : "§f- §a点击加入这支队伍");
-            lore.add("§8· · · · · · · · · · · · · ·");
+            lore.add(selected == side ? "§7- §a当前已选择这边" : "§7- §a点击加入这边");
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
@@ -76,8 +86,7 @@ public class BrickGuardTeamSelectMenu extends BaseMenu {
             case 11 -> choose(BrickGuardManager.TeamSide.BRICK);
             case 15 -> choose(BrickGuardManager.TeamSide.NETHER);
             case 22 -> {
-                playClickSound();
-                player.closeInventory();
+                handlePlainCloseAction();
             }
             default -> {
             }
