@@ -1,6 +1,6 @@
 # GameFunXiao 消息配置文件
 # 配置版本（请勿手动修改）
-config_version: 13
+config_version: 12
 
 # 通用消息
 general:
@@ -122,32 +122,6 @@ brick_guard:
   room_created: "§x§5§5§F§F§A§A已创建板砖守卫战房间 §e{room_id}§a。"
   use_dedicated_branch: "§x§F§F§9§0§2§0这是独立玩法，请使用 §e/gamefunxiao bg create §6或 §e/gamefunxiao command create brick_guard §6创建。"
 
-brick_guard:
-  guide_header: "§x§F§F§7§C§0§0▣ §x§F§F§9§0§2§0雨云 §x§D§D§5§5§1§1· §x§9§9§3§3§0§0板砖守卫战 §7玩法要点"
-  menu_opened: "§x§F§F§9§0§2§0已打开板砖守卫战导航菜单。"
-  quick_matching: "§x§F§F§A§4§4§0正在为你匹配板砖守卫战房间。"
-  room_created: "§x§5§5§F§F§A§A已创建板砖守卫战房间 §e{room_id}§a。"
-  use_dedicated_branch: "§x§F§F§9§0§2§0这是独立玩法，请使用 §e/gamefunxiao bg create §6或 §e/gamefunxiao command create brick_guard §6创建。"
-  join_brick_team: "§x§F§F§7§C§0§0你已加入板砖队。"
-  join_nether_team: "§x§6§6§1§9§0§0你已加入下界砖队。"
-  team_balance_blocked: "§x§F§F§8§8§5§5队伍人数将失衡，当前不能这样选。"
-  core_transfer_unavailable: "§x§F§F§8§8§5§5核心转移窗口已结束，或你已经转移过一次。"
-  core_transfer_failed: "§x§F§F§8§8§5§5核心转移失败，请重新确认目标队友是否在线。"
-  core_transferred: "§x§6§6§1§9§0§0下界核心已转移给 §e{player}§x§6§6§1§9§0§0。"
-  core_player_dead: "§x§6§6§1§9§0§0下界核心玩家已阵亡！§f全队进入混乱状态。"
-  dying_started: "§x§D§D§8§8§F§F你进入了濒死状态，§e1分30秒内必须续命。"
-  dying_reset: "§x§5§5§F§F§A§A你吃下了下界特色小吃，濒死倒计时已重置。"
-  respawned: "§x§5§5§F§F§A§A你已重新回到战场。"
-  fox_pick_max: "§x§F§F§8§8§5§5狐稿已经满级了。"
-  fox_pick_need_kills: "§x§F§F§8§8§5§5升级狐稿还需要更多击杀，至少要达到 §e{kills} §c次。"
-  fox_pick_need_materials: "§x§F§F§8§8§5§5升级狐稿需要 §e{brick} §6板砖 §c和 §e{diamond} §b钻石。"
-  fox_pick_upgraded: "§x§5§5§F§F§A§A狐稿升级成功！"
-  enemy_trade_denied: "§x§F§F§8§8§5§5你不能使用敌方的专属商人。"
-  totem_used: "§x§F§F§D§7§0§0不死图腾触发，你带着装备回到了核心起点。"
-  brick_win: "§x§F§F§7§C§0§0板砖队胜利！§f下界核心与队伍全部倒下。"
-  nether_win: "§x§6§6§1§9§0§0下界砖队胜利！§f板砖核心已被完全摧毁。"
-  draw: "§x§D§D§8§8§F§F板砖守卫战超时，双方平局。"
-
 # 游戏消息
 game:
   countdown: "§x§F§F§E§E§5§5⏱ §e猎物将在 §c{time} §e后开始选择世界！"
@@ -209,7 +183,6 @@ game:
   lucky_pillars_cancelled: "§x§F§F§8§8§5§5⊗ §c幸运之柱人数不足，已取消本局。"
   lucky_pillars_countdown: "§x§F§F§D§D§5§5🍀 §e幸运之柱将在 §c{time} §e后开始！"
   brick_guard_countdown: "§x§F§F§7§C§0§0▣ §e板砖守卫战将在 §c{time} §e后开始！"
-  brick_guard_cancelled: "§x§F§F§7§C§0§0▣ §c板砖守卫战人数不足，已取消本局。"
   brick_guard_started: "§x§F§F§7§C§0§0▣ §6雨云 · 板砖守卫战 §f已开局，§c破坏对面的核心才能获胜！"
   lucky_pillars_event_arrow_rain: "§x§F§F§D§D§5§5🍀 §c万箭齐发：§f抬头，小心头顶箭雨。"
   lucky_pillars_event_supply: "§x§F§F§D§D§5§5🍀 §e补给事件：§f中心圆盘掉下了一波随机物品。"

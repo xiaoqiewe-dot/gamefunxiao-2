@@ -173,7 +173,6 @@ permissions:
       gamefunxiao.admin.brickguard.create: true
       gamefunxiao.admin.brickguard.map: true
       gamefunxiao.admin.brickguard.debug: true
-      gamefunxiao.admin.brickguard.end: true
       gamefunxiao.admin.hg.create: true
       gamefunxiao.admin.hg.setlobbyspawn: true
       gamefunxiao.admin.endflashtune: true
@@ -299,9 +298,6 @@ permissions:
     default: op
   gamefunxiao.admin.brickguard.debug:
     description: 使用板砖守卫战调试命令
-    default: op
-  gamefunxiao.admin.brickguard.end:
-    description: 强制结束板砖守卫战房间
     default: op
   gamefunxiao.admin.hg.create:
     description: 使用 hg create 创建房间

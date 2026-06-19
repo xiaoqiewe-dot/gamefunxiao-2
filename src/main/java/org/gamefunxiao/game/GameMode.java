@@ -222,7 +222,7 @@ public enum GameMode {
     }
 
     public boolean isMiniGameMapEditableMode() {
-        return isLuckyPillars() || isBrickGuard();
+        return isLuckyPillars();
     }
 
     public boolean supportsFastestTimeLeaderboard() {
