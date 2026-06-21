@@ -26,17 +26,18 @@ public class MainNavigationMenu extends BaseMenu {
 
         // 标题物品 - 第一行中间
         inventory.setItem(4, createTitleItem(Material.NETHER_STAR,
-            "§x§F§F§D§7§0§0✦ §x§F§F§A§A§0§0G§x§F§F§8§0§0§0a§x§F§F§5§5§0§0m§x§F§F§2§A§0§0e§x§D§4§0§0§F§FF§x§A§A§0§0§F§Fu§x§8§0§0§0§F§Fn §x§F§F§D§7§0§0✦",
+            "§x§F§F§D§7§0§0[ GameFun 小游戏 ]",
             "§8· · · · · · · · · · · · · ·",
             "§f欢迎来到 GameFun 小游戏!",
-            "§f这里现在按玩法分成不同分区入口",
-            "§f猎人游戏和幸运之柱都会进自己的二级菜单",
+            "§f选择你想游玩的玩法",
+            "§f房间、排行和创建入口都放在对应菜单里",
             "§8· · · · · · · · · · · · · ·"));
 
         // 主菜单直达入口
         inventory.setItem(8, createShopButton());
         inventory.setItem(20, createHunterGameButton());
         inventory.setItem(22, createLuckyPillarsButton());
+        inventory.setItem(24, createBedWarsButton());
         inventory.setItem(44, createSettingsButton());
 
         // 关闭按钮
@@ -69,12 +70,28 @@ public class MainNavigationMenu extends BaseMenu {
         ItemStack item = new ItemStack(Material.GOLD_BLOCK);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("   §8[§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱§8]");
+            meta.setDisplayName("   §8[§x§F§F§D§D§5§5✦ 幸运之柱§8]");
             List<String> lore = new ArrayList<>();
             lore.add("§8· · · · · · · · · · · · · ·");
-            lore.add("§f- §a多人乱斗小游戏分区");
-            lore.add("§f- §b创建房间、房间列表、排行榜都只属于幸运之柱");
-            lore.add("§f- §7普通模式和 PVP 大佬也在它自己的菜单里");
+            lore.add("§f- §a多人乱斗小游戏");
+            lore.add("§f- §b进入房间、查看排行、创建房间");
+            lore.add("§8· · · · · · · · · · · · · ·");
+            lore.add("§f- §a点击进入");
+            meta.setLore(lore);
+            item.setItemMeta(meta);
+        }
+        return item;
+    }
+
+    private ItemStack createBedWarsButton() {
+        ItemStack item = new ItemStack(Material.RED_BED);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setDisplayName("   §8[§x§F§F§8§8§2§2✦ 起床战争§8]");
+            List<String> lore = new ArrayList<>();
+            lore.add("§8· · · · · · · · · · · · · ·");
+            lore.add("§f- §a守住核心，争夺资源");
+            lore.add("§f- §b快速加入、房间列表、排行榜");
             lore.add("§8· · · · · · · · · · · · · ·");
             lore.add("§f- §a点击进入");
             meta.setLore(lore);
@@ -142,6 +159,11 @@ public class MainNavigationMenu extends BaseMenu {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_CLUSTER_BREAK, 0.62f, 1.72f);
                 player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_FIREWORK_ROCKET_BLAST, 0.35f, 1.8f);
                 plugin.getMenuManager().openLuckyPillarsMenu(player);
+            }
+            case 24 -> {
+                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_BEACON_POWER_SELECT, 0.72f, 1.35f);
+                player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.46f, 1.48f);
+                plugin.getMenuManager().openBedWarsMenu(player);
             }
             case 44 -> {
                 player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_NOTE_BLOCK_CHIME, 0.8f, 1.45f);

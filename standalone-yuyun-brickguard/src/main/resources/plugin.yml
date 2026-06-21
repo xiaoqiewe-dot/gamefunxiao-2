@@ -1,0 +1,16 @@
+name: YuYunBrickGuard
+version: 1.0.0
+main: org.yuyun.brickguard.YuYunBrickGuardPlugin
+api-version: '1.21.11'
+authors: [qiyuan]
+description: 雨云 · 板砖守卫战
+commands:
+  brickguard:
+    description: 雨云板砖守卫战主命令
+    usage: /brickguard <menu|rooms|rank|quick|create|leave|map>
+    aliases: [bg, yzsw]
+permissions:
+  yuyunbrickguard.use:
+    default: true
+  yuyunbrickguard.admin:
+    default: op

@@ -789,7 +789,7 @@ public class GameManager {
                                         : "§x§D§D§8§8§F§F⏳ §d方块派对舞台准备中";
                                 String subText = room.getGameMode().isLuckyPillars()
                                         ? "§7正在选择主题地图并预加载出生点..."
-                                        : "§7正在按配置自动生成本局独立地图...";
+                                        : "§7正在按配置自动生成本局地图...";
                                 Component titleComp3 = LegacyComponentSerializer.legacySection().deserialize(titleText);
                                 Component subComp3 = LegacyComponentSerializer.legacySection().deserialize(subText);
                                 p.showTitle(Title.title(titleComp3, subComp3,

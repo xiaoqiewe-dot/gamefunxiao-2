@@ -55,7 +55,7 @@ public class ConfigManager {
         // 加载记分板配置
         loadConfig("scoreboard");
 
-        // 加载小游戏独立地图配置
+        // 加载小游戏专属地图配置
         loadConfig("minigame-maps");
 
         // 加载自动生成竞技场小游戏配置

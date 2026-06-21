@@ -631,7 +631,7 @@ public class GameFunCommand implements CommandExecutor, TabCompleter {
     private void sendMiniGameMapUsage(Player player) {
         player.sendMessage("§x§7§D§F§F§C§8✦ §x§A§9§F§F§E§4GameFun 地图编辑命令");
         player.sendMessage("§e/gamefunxiao map list [模式] §7- §f查看全部或指定模式地图");
-        player.sendMessage("§e/gamefunxiao map create <模式> <地图ID> [最大人数] [显示名...] §7- §f创建独立地图配置");
+        player.sendMessage("§e/gamefunxiao map create <模式> <地图ID> [最大人数] [显示名...] §7- §f创建专属地图配置");
         player.sendMessage("§e/gamefunxiao map edit <模式> <地图ID> [game|lobby] §7- §f进入游戏地图或等待大厅编辑");
         player.sendMessage("§e/gamefunxiao map active <模式> <地图ID|random> §7- §f切换固定地图或随机地图池");
         player.sendMessage("§e/gamefunxiao map enable|disable|delete <模式> <地图ID> §7- §f启用、禁用、删除地图");

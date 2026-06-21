@@ -611,7 +611,7 @@ public class ScoreboardManager {
         lines.add("§7");
         if (!room.isGameActuallyStarted()) {
             lines.add("§e§l准备开始...");
-            lines.add("§f- §7独立柱台与玻璃笼正在就位");
+            lines.add("§f- §7高空柱台与玻璃笼正在就位");
         } else {
             lines.add("§e§l经典规则");
             lines.add("§f- §6开局在玻璃笼里倒计时");
@@ -640,7 +640,7 @@ public class ScoreboardManager {
         }
         lines.add("§7");
         lines.add("§e§l经典说明");
-        lines.add("§f- §6高空独立柱台 + 玻璃笼倒计时");
+        lines.add("§f- §6高空柱台 + 玻璃笼倒计时");
         lines.add("§f- §a开局破笼后进入随机原版物品乱斗");
         lines.add("§f- §c最后存活的人获胜");
         lines.add("§7");
@@ -655,7 +655,7 @@ public class ScoreboardManager {
         lines.add("§f👥 参赛人数: §b" + room.getPlayerCount());
         lines.add("§f已进行: §e" + formatElapsedTime(room.getGameDuration()));
         lines.add("§7");
-        lines.add("§e§l独立模式");
+        lines.add("§e§l专属玩法");
         lines.add("§f- §b当前不会启用猎物 / 猎人流程");
         lines.add("§f- §a不会出现选猎物、选世界、猎人盲目提示");
         lines.add("§f- §d可继续在此基础上单独扩展新玩法");

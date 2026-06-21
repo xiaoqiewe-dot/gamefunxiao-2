@@ -22,7 +22,7 @@ public class MiniGameShopCategoryMenu extends BaseMenu {
                 "§x§5§5§F§F§A§A✦ §x§7§7§F§F§B§B商§x§9§9§F§F§C§C城§x§B§B§F§F§D§D玩§x§D§D§F§F§E§E法§x§F§F§F§F§F§F分§x§D§D§F§F§E§E类",
                 "§8· · · · · · · · · · · · · ·",
                 "§f- §b先选择要购买哪种玩法的物品",
-                "§f- §a每种玩法的物品、特效和交易都独立显示",
+                "§f- §a每种玩法的物品、特效和交易分开显示",
                 "§8· · · · · · · · · · · · · ·"));
 
         inventory.setItem(20, createItem(Material.COMPASS,

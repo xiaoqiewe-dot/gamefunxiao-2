@@ -8,7 +8,7 @@ prefix: "§x§5§5§F§F§A§A⚔ §x§6§6§F§F§B§BGameFun §x§7§7§F§F§
 hunter_game_prefix: "§x§F§F§6§6§0§0⚔ §x§F§F§9§9§3§3猎§x§F§F§C§C§6§6人§x§F§F§F§F§9§9游§x§C§C§F§F§9§9戏 §x§F§F§6§6§0§0» §f"
 # 小游戏总前缀
 minigame_prefix: "§x§7§D§F§F§C§8✦ §x§9§3§F§F§D§6小§x§A§9§F§F§E§4游§x§B§F§F§F§F§2戏 §x§7§D§F§F§C§8» §f"
-# 幸运之柱独立消息前缀
+# 幸运之柱消息前缀
 lucky_pillars_prefix: "§x§F§F§D§D§5§5🍀 §x§F§F§C§C§6§6幸§x§F§F§B§B§7§7运§x§F§F§A§A§8§8之§x§F§F§9§9§9§9柱 §x§F§F§D§D§5§5» §f"
 
 header-footer:
@@ -42,7 +42,7 @@ menu:
 
 # 猎人游戏设置
 hunter_game:
-  # 房间后端模式：cross_server=跨服传送到固定小游戏服创建，current_server_world=在当前服务器创建世界，child_server=启动独立子服房间
+  # 房间后端模式：cross_server=跨服传送到固定小游戏服创建，current_server_world=在当前服务器创建世界，child_server=启动小游戏子服房间
   room_backend: "cross_server"
   cross_server:
     # 是否启用固定小游戏服传送；关闭时不会把玩家传到 gameing，会自动在当前服务器开房间

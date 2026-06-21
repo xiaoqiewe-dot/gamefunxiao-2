@@ -29,6 +29,7 @@ public class MenuManager {
     private final Map<UUID, Class<? extends BaseMenu>> commandReturnRootMenuTypes = new HashMap<>();
     private static final List<String> COMMAND_MENU_IDS = List.of(
             "main", "home", "hunter", "huntergame", "hg",
+            "bedwars", "bw", "brickguard",
             "lucky", "luckypillars", "lp",
             "rooms", "roomlist", "luckyrooms", "lprooms",
             "create", "createroom", "luckycreate", "lpcreate",
@@ -92,6 +93,7 @@ public class MenuManager {
         return switch (id) {
             case "main", "home", "menu", "主菜单", "主页" -> new MainNavigationMenu(plugin, player);
             case "hunter", "huntergame", "hg", "猎人", "猎人游戏" -> new HunterGameNavigationMenu(plugin, player);
+            case "bedwars", "bw", "brickguard", "起床战争", "板砖守卫战" -> new BedWarsNavigationMenu(plugin, player);
             case "lucky", "luckypillars", "lp", "幸运之柱" -> new LuckyPillarsNavigationMenu(plugin, player);
             case "rooms", "roomlist", "房间", "查看房间" -> new RoomListMenu(plugin, player);
             case "luckyrooms", "lprooms", "幸运房间" -> RoomListMenu.luckyPillarsOnly(plugin, player);
@@ -224,6 +226,13 @@ public class MenuManager {
             return;
         }
         openMenu(player, new LuckyPillarsNavigationMenu(plugin, player));
+    }
+
+    public void openBedWarsMenu(Player player) {
+        if (!canOpenGameFunMenu(player)) {
+            return;
+        }
+        openMenu(player, new BedWarsNavigationMenu(plugin, player));
     }
 
 
