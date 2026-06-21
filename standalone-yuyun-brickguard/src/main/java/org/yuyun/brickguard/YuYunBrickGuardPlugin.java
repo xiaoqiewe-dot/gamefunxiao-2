@@ -1334,42 +1334,75 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
 
     private void openShop(Player player, String category) {
         Optional<Room> optional = activeRoom(player);
-        if (optional.isEmpty() || optional.get().status != Room.Status.RUNNING) {
+        if (optional.isEmpty() || optional.get().status != Room.Status.RUNNING || !optional.get().canFight(player)) {
             msg(player, "§x§F§F§8§8§5§5商店只会在开局后打开。");
             return;
         }
         Room room = optional.get();
         Team team = room.team(player.getUniqueId());
-        Inventory inv = Bukkit.createInventory(player, 54, Text.c("§0§l" + (team == Team.BRICK ? "板砖商店" : "下界砖商店")));
-        inv.setItem(4, items.item(team.icon, team.color + "[ " + team.display + "商店 ]", List.of("§f- §a分类购买与快捷购买", "§f- §7材料不足不会扣除")));
-        putShopCategory(inv, 10, "quick", category, Material.NETHER_STAR, "快捷购买", "常用物资放在这里");
-        putShopCategory(inv, 19, "blocks", category, Material.BRICKS, "方块", "推进、防守和补路");
-        putShopCategory(inv, 28, "weapons", category, Material.IRON_SWORD, "武器", "近战与远程装备");
-        putShopCategory(inv, 37, "armor", category, Material.IRON_CHESTPLATE, "护甲", "提高容错");
-        putShopCategory(inv, 16, "tools", category, Material.IRON_PICKAXE, "工具", "矿稿与功能工具");
-        putShopCategory(inv, 25, "food", category, Material.COOKED_BEEF, "补给", "食物与恢复");
-        putShopCategory(inv, 34, "special", category, Material.BEACON, "特殊", "战术物品");
+        category = normalizeShopCategory(category);
+        Inventory inv = Bukkit.createInventory(player, 54, Text.c("§0" + (team == Team.BRICK ? "板砖商店" : "下界砖商店")));
+        ShopCategory[] categories = shopCategories(team);
+        for (int i = 0; i < categories.length; i++) {
+            putShopCategory(inv, i, categories[i], category);
+        }
+        ItemStack line = items.item(Material.GRAY_STAINED_GLASS_PANE, "§8", List.of());
+        for (int slot = 9; slot <= 17; slot++) inv.setItem(slot, line);
+        inv.setItem(13, items.item(team.icon, team.color + "[ " + shopCategoryName(category) + " ]", List.of("§f- §a点击上方分类切换", "§f- §7下方背包可以正常整理物品")));
         List<Product> products = shopProducts(team, category);
-        int[] slots = centeredShopSlots(products.size());
+        int[] slots = bedwarsShopSlots(products.size());
         for (int i = 0; i < Math.min(slots.length, products.size()); i++) {
             Product p = products.get(i);
             inv.setItem(slots[i], productButton(player, team, p, category, i));
         }
-        if (products.isEmpty()) inv.setItem(22, items.item(Material.PAPER, "§x§B§B§B§B§B§B[ 这个分类没有商品 ]", List.of("§f- §7换个分类看看")));
+        if (products.isEmpty()) inv.setItem(31, items.item(Material.PAPER, "§x§B§B§B§B§B§B[ 这个分类没有商品 ]", List.of("§f- §7换个分类看看")));
         player.openInventory(inv);
 
         openMenus.put(player.getUniqueId(), new OpenMenu(MenuType.SHOP, team.id + ":" + category));
         menuSound(player, team == Team.BRICK ? Sound.ENTITY_VILLAGER_TRADE : Sound.ENTITY_PIGLIN_AMBIENT, 0.9F, 1.2F);
     }
 
-    private int[] centeredShopSlots(int count) {
-        int capped = Math.max(1, Math.min(16, count));
+    private String normalizeShopCategory(String category) {
+        return switch ((category == null ? "quick" : category).toLowerCase(Locale.ROOT)) {
+            case "blocks", "weapons", "armor", "tools", "food", "special" -> category.toLowerCase(Locale.ROOT);
+            default -> "quick";
+        };
+    }
+
+    private ShopCategory[] shopCategories(Team team) {
+        Material blocks = team == Team.BRICK ? Material.BRICKS : Material.NETHER_BRICKS;
+        Material food = team == Team.BRICK ? Material.COOKED_BEEF : Material.ROTTEN_FLESH;
+        return new ShopCategory[]{
+                new ShopCategory("quick", Material.NETHER_STAR, "快捷购买", "常用物资"),
+                new ShopCategory("blocks", blocks, "方块", "推进防守"),
+                new ShopCategory("weapons", Material.IRON_SWORD, "武器", "近战远程"),
+                new ShopCategory("armor", Material.IRON_CHESTPLATE, "护甲", "直接升级"),
+                new ShopCategory("tools", Material.IRON_PICKAXE, "工具", "稿子功能"),
+                new ShopCategory("food", food, "补给", "食物恢复"),
+                new ShopCategory("special", Material.BEACON, "特殊", "战术道具")
+        };
+    }
+
+    private String shopCategoryName(String category) {
+        return switch (normalizeShopCategory(category)) {
+            case "blocks" -> "方块";
+            case "weapons" -> "武器";
+            case "armor" -> "护甲";
+            case "tools" -> "工具";
+            case "food" -> "补给";
+            case "special" -> "特殊";
+            default -> "快捷购买";
+        };
+    }
+
+    private int[] bedwarsShopSlots(int count) {
+        int capped = Math.max(1, Math.min(21, count));
         List<Integer> slots = new ArrayList<>();
-        int rows = Math.max(1, (int) Math.ceil(capped / 4.0D));
-        int startRow = 1 + (4 - rows) / 2;
+        int rows = Math.max(1, (int) Math.ceil(capped / 7.0D));
+        int startRow = 2;
         int left = capped;
         for (int row = 0; row < rows && left > 0; row++) {
-            int rowCount = Math.min(4, left);
+            int rowCount = Math.min(7, left);
             int startCol = 4 - rowCount / 2;
             if (rowCount % 2 == 0) startCol++;
             for (int col = startCol; col < startCol + rowCount; col++) {
@@ -1380,25 +1413,34 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         return slots.stream().mapToInt(Integer::intValue).toArray();
     }
 
-    private void putShopCategory(Inventory inv, int slot, String id, String selected, Material icon, String name, String desc) {
-        boolean active = id.equalsIgnoreCase(selected);
-        inv.setItem(slot, items.action(icon,
-                (active ? "§x§7§D§F§F§C§8✓ " : "§f") + name,
-                List.of("§f- §a" + desc, active ? "§8- 当前分类" : "§8- 点击切换"),
-                "shopcat_" + id));
+    private void putShopCategory(Inventory inv, int slot, ShopCategory category, String selected) {
+        boolean active = category.id().equalsIgnoreCase(selected);
+        List<String> lore = new ArrayList<>();
+        lore.add("§f- §a" + category.desc());
+        lore.add(active ? "§8[ 当前分类 ]" : "§8[ 点击切换 ]");
+        inv.setItem(slot, items.action(category.icon(),
+                (active ? "§x§7§D§F§F§C§8" : "§f") + "[ " + category.name() + " ]",
+                lore,
+                "shopcat_" + category.id()));
     }
 
     private ItemStack productButton(Player player, Team team, Product p, String category, int index) {
         List<String> lore = new ArrayList<>(p.lore);
         Cost cost = costFor(player, team, p);
+        boolean enough = countItem(player, cost.currency) >= cost.price;
+        boolean killsEnough = activeRoom(player).map(room -> room.kills.getOrDefault(player.getUniqueId(), 0)).orElse(0) >= cost.killPrice;
         if (p.icon == Material.IRON_PICKAXE) {
             int current = currentPickaxeLevel(player);
             int next = Math.min(5, Math.max(1, current + 1));
             lore.add("§8[ 品质 ] §f" + current + " §7→ §f" + next);
+        } else if (isSword(p.icon)) {
+            lore.add("§8[ 升级 ] §f当前 " + currentSwordRank(player) + " §7→ §f" + swordRank(p.icon));
+        } else if (isArmorPiece(p.icon)) {
+            lore.add("§8[ 升级 ] §f当前 " + currentArmorRank(player, p.icon) + " §7→ §f" + armorRank(p.icon));
         }
-        lore.add("§8[ 价格 ] §f" + cost.price + " §7" + cost.currencyName);
-        if (cost.killPrice > 0) lore.add("§8[ 条件 ] §f" + cost.killPrice + " §7击杀数");
-        lore.add("§f- §a左键购买");
+        lore.add((enough ? "§8[ 价格 ] §f" : "§8[ 价格 ] §x§F§F§8§8§5§5") + cost.price + " §7" + cost.currencyName);
+        if (cost.killPrice > 0) lore.add((killsEnough ? "§8[ 条件 ] §f" : "§8[ 条件 ] §x§F§F§8§8§5§5") + cost.killPrice + " §7击杀数");
+        lore.add(enough && killsEnough ? "§f- §a点击购买" : "§f- §x§F§F§8§8§5§5材料不足");
         return items.action(p.icon, p.name, lore, "buy_" + category + "_" + index);
     }
 
@@ -1673,8 +1715,19 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         return true;
     }
 
+    private int countItem(Player player, Material material) {
+        int amount = 0;
+        for (ItemStack item : player.getInventory().getContents()) {
+            if (item != null && item.getType() == material) amount += item.getAmount();
+        }
+        return amount;
+    }
+
     private String strip(String legacy) {
         return legacy.replaceAll("§x(§[0-9A-Fa-f]){6}", "").replaceAll("§[0-9A-Fa-fK-Ok-oRr]", "");
+    }
+
+    private record ShopCategory(String id, Material icon, String name, String desc) {
     }
 
     private record Product(Material icon, int amount, String name, List<String> lore, int price, Material currency, String currencyName, int killPrice) {
@@ -2948,6 +3001,10 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         String type = event.getRightClicked().getPersistentDataContainer().get(typeKey, PersistentDataType.STRING);
         if ("shop_brick".equals(type) || "shop_nether".equals(type)) {
             event.setCancelled(true);
+            if (room.status != Room.Status.RUNNING || !room.canFight(player)) {
+                msg(player, "§x§F§F§8§8§5§5现在不能交易。");
+                return;
+            }
             Team required = "shop_brick".equals(type) ? Team.BRICK : Team.NETHER;
             if (room.team(player.getUniqueId()) != required) {
                 msg(player, "§x§F§F§8§8§5§5这个商人不会跟你交易。");
