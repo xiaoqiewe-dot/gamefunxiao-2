@@ -37,6 +37,7 @@ final class Room {
     int netherBossNoticeTicks;
     String brickBossNotice;
     String netherBossNotice;
+    String lastFinalKillSoundKey;
 
     Status status = Status.WAITING;
     World lobbyWorld;
@@ -98,6 +99,11 @@ final class Room {
     }
 
     boolean isActive(Player player) {
+        UUID uuid = player.getUniqueId();
+        return players.contains(uuid) && !finalDead.contains(uuid);
+    }
+
+    boolean canFight(Player player) {
         UUID uuid = player.getUniqueId();
         return players.contains(uuid) && !spectators.contains(uuid) && !finalDead.contains(uuid);
     }

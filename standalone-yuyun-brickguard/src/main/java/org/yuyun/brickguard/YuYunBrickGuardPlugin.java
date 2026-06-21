@@ -30,6 +30,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -83,6 +84,8 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     private final Map<UUID, InventorySnapshot> toolkitSnapshots = new HashMap<>();
     private final Map<UUID, Long> shoutCooldowns = new HashMap<>();
     private final Map<UUID, Long> clickCooldowns = new HashMap<>();
+    private final Set<UUID> downingPlayers = new HashSet<>();
+    private final Set<UUID> respawnGhosts = new HashSet<>();
     private BukkitTask ticker;
     private int roomCounter;
 
@@ -200,10 +203,6 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
                 if (args.length >= 2) selectTeam(player, Team.fromAction("team_" + args[1].toLowerCase(Locale.ROOT)));
                 else openTeamMenu(player);
             }
-            case "shop" -> {
-                if (!isPlayer(sender)) return true;
-                openShop((Player) sender);
-            }
             case "map" -> handleMapCommand(sender, args);
             case "reload" -> {
                 if (!isAdmin(sender)) {
@@ -228,7 +227,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         raw(sender, "§8- §f/brickguard create §7创建房间");
         raw(sender, "§8- §f/brickguard leave §7离开房间");
         raw(sender, "§8- §f/brickguard team §7选择队伍");
-        raw(sender, "§8- §f/brickguard shop §7打开商店");
+        raw(sender, "§8- §f/teammsg <内容> §7队伍聊天");
         if (isAdmin(sender)) {
             raw(sender, "§x§7§D§F§F§C§8管理命令");
             raw(sender, "§8- §f/brickguard map create lobby|brick|nether|all §7创建编辑世界");
@@ -330,7 +329,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> list = new ArrayList<>(List.of("help", "menu", "rooms", "rank", "quick", "create", "leave", "team", "shop"));
+            List<String> list = new ArrayList<>(List.of("help", "menu", "rooms", "rank", "quick", "create", "leave", "team"));
             if (isAdmin(sender)) list.addAll(List.of("map", "reload"));
             return filter(list, args[0]);
         }
@@ -640,7 +639,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             msg(owner, data.missing().isEmpty() ? "§x§F§F§B§B§6§6地图还没有允许加入游戏。" : "§x§F§F§8§8§5§5地图还缺少：§f" + String.join("§7、§f", data.missing()));
             return;
         }
-        String id = String.valueOf(++roomCounter);
+        String id = nextRoomId();
         Room room = new Room(id, owner.getUniqueId(), cfg("waiting_seconds", 30), cfg("game_seconds", 3600), cfg("brick_core_health", 500));
         if (!prepareWaitingLobby(room)) {
             msg(owner, "§x§F§F§8§8§5§5等待大厅复制失败，房间没有创建。");
@@ -649,6 +648,13 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         rooms.put(id, room);
         joinRoom(owner, room);
         msg(owner, "§x§7§D§F§F§C§8已创建房间 §f" + id + "§x§7§D§F§F§C§8。");
+    }
+
+    private String nextRoomId() {
+        int id = 1;
+        while (rooms.containsKey(String.valueOf(id))) id++;
+        roomCounter = Math.max(roomCounter, id);
+        return String.valueOf(id);
     }
 
     private void quickJoin(Player player) {
@@ -685,6 +691,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         player.setGameMode(GameMode.ADVENTURE);
         player.setAllowFlight(false);
         player.getInventory().clear();
+        clearExperience(player);
         ItemStack compass = items.actionModel(Material.PAPER, "§x§7§D§F§F§C§8[ 选择队伍 ]", List.of("§f- §a打开队伍选择菜单"), "open_team", Material.COMPASS);
         player.getInventory().setItem(0, compass);
         if (isAdmin(player)) {
@@ -922,6 +929,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         player.setExhaustion(0.0F);
         player.setHealth(Math.min(maxHealth(player), maxHealth(player)));
         player.setRemainingAir(player.getMaximumAir());
+        clearExperience(player);
     }
 
     private void setupBrickPlayer(Player player, Location spawn) {
@@ -1091,6 +1099,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     private void protectWaitingPlayer(Room room, Player player) {
         player.setFireTicks(0);
         if (player.getHealth() < maxHealth(player)) player.setHealth(Math.min(maxHealth(player), maxHealth(player)));
+        clearExperience(player);
         handleVoidReturn(room, player);
     }
 
@@ -1344,7 +1353,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         int[] slots = centeredShopSlots(products.size());
         for (int i = 0; i < Math.min(slots.length, products.size()); i++) {
             Product p = products.get(i);
-            inv.setItem(slots[i], productButton(p, category, i));
+            inv.setItem(slots[i], productButton(player, team, p, category, i));
         }
         if (products.isEmpty()) inv.setItem(22, items.item(Material.PAPER, "§x§B§B§B§B§B§B[ 这个分类没有商品 ]", List.of("§f- §7换个分类看看")));
         player.openInventory(inv);
@@ -1379,10 +1388,16 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
                 "shopcat_" + id));
     }
 
-    private ItemStack productButton(Product p, String category, int index) {
+    private ItemStack productButton(Player player, Team team, Product p, String category, int index) {
         List<String> lore = new ArrayList<>(p.lore);
-        lore.add("§8[ 价格 ] §f" + p.price + " §7" + p.currencyName);
-        if (p.killPrice > 0) lore.add("§8[ 条件 ] §f" + p.killPrice + " §7击杀数");
+        Cost cost = costFor(player, team, p);
+        if (p.icon == Material.IRON_PICKAXE) {
+            int current = currentPickaxeLevel(player);
+            int next = Math.min(5, Math.max(1, current + 1));
+            lore.add("§8[ 品质 ] §f" + current + " §7→ §f" + next);
+        }
+        lore.add("§8[ 价格 ] §f" + cost.price + " §7" + cost.currencyName);
+        if (cost.killPrice > 0) lore.add("§8[ 条件 ] §f" + cost.killPrice + " §7击杀数");
         lore.add("§f- §a左键购买");
         return items.action(p.icon, p.name, lore, "buy_" + category + "_" + index);
     }
@@ -1473,14 +1488,15 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             playSound(player, "buy.fail", Sound.BLOCK_ANVIL_USE, 0.7F, 1.6F);
             return;
         }
+        Cost cost = costFor(player, team, p);
         int kills = optional.get().kills.getOrDefault(player.getUniqueId(), 0);
-        if (kills < p.killPrice) {
-            msg(player, "§x§F§F§8§8§5§5击杀数不足，需要 §f" + p.killPrice + " §x§F§F§8§8§5§5击杀。");
+        if (kills < cost.killPrice) {
+            msg(player, "§x§F§F§8§8§5§5击杀数不足，需要 §f" + cost.killPrice + " §x§F§F§8§8§5§5击杀。");
             playSound(player, "buy.fail", Sound.BLOCK_ANVIL_USE, 0.7F, 1.8F);
             return;
         }
-        if (!take(player, p.currency, p.price)) {
-            msg(player, "§x§F§F§8§8§5§5材料不足，需要 §f" + p.price + " §x§F§F§8§8§5§5" + p.currencyName + "。");
+        if (!take(player, cost.currency, cost.price)) {
+            msg(player, "§x§F§F§8§8§5§5材料不足，需要 §f" + cost.price + " §x§F§F§8§8§5§5" + cost.currencyName + "。");
             playSound(player, "buy.fail", Sound.BLOCK_ANVIL_USE, 0.7F, 1.8F);
             return;
         }
@@ -1498,6 +1514,31 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         msg(player, "§x§7§D§F§F§C§8已购买 §f" + strip(p.name) + "§x§7§D§F§F§C§8。");
         playSound(player, p.icon == Material.IRON_PICKAXE || isSword(p.icon) || isArmorPiece(p.icon) ? "buy.upgrade" : "buy.success", Sound.ENTITY_ITEM_PICKUP, 0.9F, 1.35F);
         openShop(player, category);
+    }
+
+    private Cost costFor(Player player, Team team, Product product) {
+        if (product.icon != Material.IRON_PICKAXE) {
+            return new Cost(product.price, product.currency, product.currencyName, product.killPrice);
+        }
+        int current = currentPickaxeLevel(player);
+        if (current >= 5) return new Cost(0, product.currency, product.currencyName, product.killPrice);
+        int next = Math.max(1, Math.min(5, current + 1));
+        if (team == Team.NETHER) {
+            return switch (next) {
+                case 1 -> new Cost(20, Material.NETHER_BRICK, "下界砖", 0);
+                case 2 -> new Cost(36, Material.NETHER_BRICK, "下界砖", 0);
+                case 3 -> new Cost(3, Material.GOLD_NUGGET, "金粒矿", 1);
+                case 4 -> new Cost(5, Material.GOLD_NUGGET, "金粒矿", 2);
+                default -> new Cost(8, Material.GOLD_NUGGET, "金粒矿", 3);
+            };
+        }
+        return switch (next) {
+            case 1 -> new Cost(16, Material.BRICK, "板砖", 0);
+            case 2 -> new Cost(24, Material.BRICK, "板砖", 0);
+            case 3 -> new Cost(48, Material.BRICK, "板砖", 1);
+            case 4 -> new Cost(3, Material.DIAMOND, "钻石", 2);
+            default -> new Cost(6, Material.DIAMOND, "钻石", 3);
+        };
     }
 
     private ItemStack productStack(Product p, Team team) {
@@ -1640,6 +1681,9 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         Product(Material icon, int amount, String name, List<String> lore, int price, Material currency, String currencyName) {
             this(icon, amount, name, lore, price, currency, currencyName, 0);
         }
+    }
+
+    private record Cost(int price, Material currency, String currencyName, int killPrice) {
     }
 
     private void enterEdit(Player player, MapSide side) {
@@ -1858,7 +1902,16 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             if (shouldCancelGameInventoryClick(player, event)) event.setCancelled(true);
             return;
         }
+        int topSize = event.getView().getTopInventory().getSize();
+        boolean clickedTop = event.getRawSlot() >= 0 && event.getRawSlot() < topSize;
+        if (open.type() == MenuType.SHOP && !clickedTop) {
+            if (event.getAction() == org.bukkit.event.inventory.InventoryAction.MOVE_TO_OTHER_INVENTORY || shouldCancelGameInventoryClick(player, event)) {
+                event.setCancelled(true);
+            }
+            return;
+        }
         event.setCancelled(true);
+        if (!clickedTop) return;
         ItemStack clicked = event.getCurrentItem();
         String action = items.actionOf(clicked);
         if (action == null) return;
@@ -1961,6 +2014,14 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         if (!(event.getWhoClicked() instanceof Player player)) return;
         Optional<Room> optional = activeRoom(player);
         if (optional.isEmpty()) return;
+        OpenMenu open = openMenus.get(player.getUniqueId());
+        if (open != null && open.type() == MenuType.SHOP) {
+            int topSize = event.getView().getTopInventory().getSize();
+            if (event.getRawSlots().stream().anyMatch(slot -> slot < topSize) || isArmorStack(event.getOldCursor()) || isArmorStack(event.getCursor())) {
+                event.setCancelled(true);
+            }
+            return;
+        }
         if (isArmorStack(event.getOldCursor()) || isArmorStack(event.getCursor())) {
             event.setCancelled(true);
             return;
@@ -1987,6 +2048,11 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     public void onInteract(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (event.getHand() != EquipmentSlot.HAND) return;
+        Optional<Room> active = activeRoom(player);
+        if (active.isPresent() && active.get().status == Room.Status.RUNNING && !active.get().canFight(player)) {
+            event.setCancelled(true);
+            return;
+        }
         ItemStack item = event.getItem();
         String action = items.actionOf(item);
         if (action == null) return;
@@ -2027,6 +2093,10 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             return;
         }
         if (room.status != Room.Status.RUNNING) return;
+        if (!room.canFight(player)) {
+            event.setCancelled(true);
+            return;
+        }
         ItemStack dropped = event.getItemDrop().getItemStack();
         int level = items.pickaxeLevel(dropped);
         if (level <= 0) return;
@@ -2068,6 +2138,84 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         if (activeRoom(event.getPlayer()).isPresent() || editSessions.containsKey(event.getPlayer().getUniqueId())) {
             event.message(null);
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onTeamMessage(PlayerCommandPreprocessEvent event) {
+        String raw = event.getMessage();
+        String lower = raw.toLowerCase(Locale.ROOT);
+        if (!lower.equals("/teammsg") && !lower.startsWith("/teammsg ") && !lower.equals("/tm") && !lower.startsWith("/tm ")) return;
+        Player player = event.getPlayer();
+        Optional<Room> optional = activeRoom(player);
+        if (optional.isEmpty()) return;
+        event.setCancelled(true);
+        String message = raw.startsWith("/tm") ? raw.substring(Math.min(raw.length(), 3)).trim() : raw.substring(Math.min(raw.length(), 8)).trim();
+        if (message.isBlank()) {
+            msg(player, "§x§F§F§B§B§6§6用法：§f/teammsg <内容>");
+            return;
+        }
+        sendTeamMessage(optional.get(), player, message);
+    }
+
+    private void sendTeamMessage(Room room, Player player, String message) {
+        Team team = room.team(player.getUniqueId());
+        if (team == null) {
+            msg(player, "§x§F§F§8§8§5§5你还没有队伍。");
+            return;
+        }
+        String clean = message.replace('§', ' ');
+        String text = team.color + "[队伍] §f" + player.getName() + " §7» §f" + clean;
+        for (Player teammate : room.onlineTeam(team)) {
+            teammate.sendMessage(Text.c(text));
+            playSound(teammate, "message.info", Sound.BLOCK_NOTE_BLOCK_CHIME, 0.35F, 1.45F);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player viewer = event.getPlayer();
+        for (UUID uuid : respawnGhosts) {
+            Player ghost = Bukkit.getPlayer(uuid);
+            if (ghost != null && !ghost.getUniqueId().equals(viewer.getUniqueId())) viewer.hidePlayer(this, ghost);
+        }
+    }
+
+    @EventHandler
+    public void onExperience(PlayerExpChangeEvent event) {
+        if (activeRoom(event.getPlayer()).isPresent()) {
+            event.setAmount(0);
+            clearExperience(event.getPlayer());
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        Player player = event.getEntity();
+        Optional<Room> optional = activeRoom(player);
+        if (optional.isEmpty()) return;
+        Room room = optional.get();
+        event.deathMessage(null);
+        event.getDrops().clear();
+        event.setDroppedExp(0);
+        event.setNewExp(0);
+        event.setNewLevel(0);
+        event.setNewTotalExp(0);
+        event.setKeepInventory(true);
+        event.setKeepLevel(false);
+        if (room.status != Room.Status.RUNNING) return;
+        Player killer = validKiller(room, player, player.getKiller());
+        if (killer == null && player.getLastDamageCause() instanceof EntityDamageByEntityEvent damage) {
+            killer = validKiller(room, player, attacker(damage.getDamager()));
+        }
+        Player finalKiller = killer;
+        Bukkit.getScheduler().runTask(this, () -> {
+            if (!player.isOnline() || room.status != Room.Status.RUNNING) return;
+            try {
+                player.spigot().respawn();
+            } catch (Throwable ignored) {
+            }
+            handlePlayerDownOnce(room, player, finalKiller);
+        });
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -2246,6 +2394,10 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         }
         Team vt = room.team(victim.getUniqueId());
         Team at = room.team(attacker.getUniqueId());
+        if (!room.canFight(victim) || !room.canFight(attacker)) {
+            event.setCancelled(true);
+            return;
+        }
         if (vt == at) {
             event.setCancelled(true);
             return;
@@ -2259,6 +2411,10 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             showNetherCoreNotice(room, attacker, Math.max(1, (int) Math.ceil(Math.min(victim.getHealth(), event.getFinalDamage()))));
         }
         victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 20, 0, false, false, false));
+        if (event.getFinalDamage() >= victim.getHealth()) {
+            event.setCancelled(true);
+            handlePlayerDownOnce(room, victim, attacker);
+        }
     }
 
     private boolean isShopEntity(Entity entity) {
@@ -2333,7 +2489,8 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         }
         if (event.getFinalDamage() < player.getHealth()) return;
         event.setCancelled(true);
-        handlePlayerDown(room, player, event instanceof EntityDamageByEntityEvent entityDamage ? attacker(entityDamage.getDamager()) : null);
+        Player killer = event instanceof EntityDamageByEntityEvent entityDamage ? attacker(entityDamage.getDamager()) : null;
+        handlePlayerDownOnce(room, player, validKiller(room, player, killer));
     }
 
     @EventHandler
@@ -2382,7 +2539,10 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             core.getWorld().spawnParticle(Particle.FLAME, core.clone().add(0.5, 0.8, 0.5), 20, 0.4, 0.4, 0.4, 0.03);
             playWorldSound(core, "core.damage", Sound.BLOCK_ANVIL_USE, 0.7F, 1.2F);
         }
-        if (room.brickCoreHealth <= 0) endRoom(room, Team.NETHER, true);
+        if (room.brickCoreHealth <= 0) {
+            rememberFinalKillSound(room, attacker);
+            endRoom(room, Team.NETHER, true);
+        }
     }
 
     private void buildPortal(Room room) {
@@ -2421,7 +2581,27 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         }
     }
 
+    private void handlePlayerDownOnce(Room room, Player player, Player killer) {
+        UUID uuid = player.getUniqueId();
+        if (!downingPlayers.add(uuid)) return;
+        Bukkit.getScheduler().runTaskLater(this, () -> downingPlayers.remove(uuid), 2L);
+        handlePlayerDown(room, player, validKiller(room, player, killer));
+    }
+
+    private Player validKiller(Room room, Player victim, Player killer) {
+        if (killer == null || victim == null || killer.getUniqueId().equals(victim.getUniqueId())) return null;
+        if (activeRoom(killer).orElse(null) != room) return null;
+        if (room.team(killer.getUniqueId()) == room.team(victim.getUniqueId())) return null;
+        if (!room.canFight(killer)) return null;
+        return killer;
+    }
+
     private void handlePlayerDown(Room room, Player player, Player killer) {
+        killer = validKiller(room, player, killer);
+        player.setFireTicks(0);
+        player.setFallDistance(0.0F);
+        player.setHealth(Math.max(1.0D, Math.min(maxHealth(player), maxHealth(player))));
+        clearExperience(player);
         if (killer != null) room.kills.merge(killer.getUniqueId(), 1, Integer::sum);
         if (killer != null && room.dyingSeconds.containsKey(killer.getUniqueId())) killer.getInventory().addItem(new ItemStack(Material.GOLD_NUGGET, 1));
         if (killer != null) repairAllTools(killer);
@@ -2499,8 +2679,11 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     private void startRespawn(Room room, Player player) {
         downgradePickaxes(room, player);
         room.respawnSeconds.put(player.getUniqueId(), ThreadLocalRandom.current().nextInt(10, 36));
-        player.setGameMode(GameMode.SPECTATOR);
+        enterRespawnGhost(room, player);
         player.setHealth(Math.max(1.0D, maxHealth(player)));
+        clearExperience(player);
+        Location target = returnSpawn(room, player);
+        if (target != null) player.teleport(target);
         player.sendActionBar(Text.c("§x§F§F§B§B§6§6等待复活"));
     }
 
@@ -2533,7 +2716,9 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
 
     private void respawn(Room room, Player player) {
         Team team = room.team(player.getUniqueId());
+        leaveRespawnGhost(room, player);
         player.setGameMode(GameMode.SURVIVAL);
+        resetStartState(player);
         player.setHealth(maxHealth(player));
         if (team == Team.BRICK) {
             Location spawn = roomLoc(room, maps.read().brickSpawn, MapSide.BRICK);
@@ -2542,6 +2727,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             Location spawn = safeNetherRespawn(room);
             if (spawn != null) player.teleport(spawn);
         }
+        applyGameName(player, room, team);
         playSound(player, "respawn", Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 0.9F, 1.3F);
     }
 
@@ -2569,15 +2755,31 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     }
 
     private void finalDeath(Room room, Player player, Player killer) {
+        leaveRespawnGhost(room, player);
         room.finalDead.add(player.getUniqueId());
         room.spectators.add(player.getUniqueId());
         room.dyingSeconds.remove(player.getUniqueId());
         room.respawnSeconds.remove(player.getUniqueId());
         player.setGameMode(GameMode.SPECTATOR);
         player.setHealth(Math.max(1.0D, maxHealth(player)));
+        clearExperience(player);
+        rememberFinalKillSound(room, killer);
         if (killer != null) room.broadcast(prefix() + "§f" + player.getName() + " §x§F§F§8§8§5§5被 §f" + killer.getName() + " §x§F§F§8§8§5§5终结了。");
         else room.broadcast(prefix() + "§f" + player.getName() + " §x§F§F§8§8§5§5被终结了。");
         checkWin(room);
+    }
+
+    private void rememberFinalKillSound(Room room, Player killer) {
+        if (room == null) return;
+        String key = "final.kill.crit";
+        if (killer != null) {
+            ItemStack hand = killer.getInventory().getItemInMainHand();
+            Material type = hand == null ? Material.AIR : hand.getType();
+            if (type == Material.MACE) key = "final.kill.mace";
+            else if (type == Material.IRON_SPEAR || type == Material.GOLDEN_SPEAR) key = "final.kill.spear";
+            else if (items.pickaxeLevel(hand) > 0) key = "final.kill.pickaxe";
+        }
+        room.lastFinalKillSoundKey = key;
     }
 
     private void checkWin(Room room) {
@@ -2783,10 +2985,15 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             if (winner == Team.BRICK) room.title("§x§f§f§7§c§0§0板砖队胜利", "§f下界核心已经破碎");
             else if (winner == Team.NETHER) room.title("§x§6§6§1§9§0§0下界砖队胜利", "§f板砖核心已经崩塌");
             else room.title("§x§7§D§F§F§C§8平局", "§f时间耗尽");
+            if (room.lastFinalKillSoundKey != null) {
+                playRoomSound(room, room.lastFinalKillSoundKey, Sound.ENTITY_PLAYER_ATTACK_CRIT, 0.95F, 1.15F);
+            }
+            playRoomSound(room, "game.end_dragon", Sound.ENTITY_ENDER_DRAGON_DEATH, 1.0F, 1.0F);
             playRoomSound(room, winner == null ? "game.draw" : "game.win", winner == null ? Sound.BLOCK_AMETHYST_BLOCK_CHIME : Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.2F);
             showEndLeaderboard(room, winner);
             for (Player player : room.onlinePlayers()) {
                 player.closeInventory();
+                leaveRespawnGhost(room, player);
                 player.setGameMode(GameMode.SPECTATOR);
             }
             room.task = Bukkit.getScheduler().runTaskTimer(this, new Runnable() {
@@ -2869,13 +3076,54 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         safeDeleteRuntimeFolder(folder);
     }
 
+    private void clearExperience(Player player) {
+        if (player == null) return;
+        player.setExp(0.0F);
+        player.setLevel(0);
+        player.setTotalExperience(0);
+    }
+
+    private void enterRespawnGhost(Room room, Player player) {
+        UUID uuid = player.getUniqueId();
+        room.spectators.add(uuid);
+        respawnGhosts.add(uuid);
+        player.setGameMode(GameMode.ADVENTURE);
+        player.setAllowFlight(true);
+        player.setFlying(true);
+        player.setInvulnerable(true);
+        player.setCollidable(false);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 0, false, false, false));
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            if (!viewer.getUniqueId().equals(uuid)) viewer.hidePlayer(this, player);
+        }
+    }
+
+    private void leaveRespawnGhost(Room room, Player player) {
+        UUID uuid = player.getUniqueId();
+        respawnGhosts.remove(uuid);
+        if (room != null && !room.finalDead.contains(uuid)) room.spectators.remove(uuid);
+        for (Player viewer : Bukkit.getOnlinePlayers()) {
+            viewer.showPlayer(this, player);
+        }
+        player.removePotionEffect(PotionEffectType.INVISIBILITY);
+        player.setInvulnerable(false);
+        player.setCollidable(true);
+        player.setFlying(false);
+        player.setAllowFlight(false);
+    }
+
     private void resetPlayer(Player player, Room room) {
+        leaveRespawnGhost(room, player);
         player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
+        clearExperience(player);
+        player.setInvulnerable(false);
+        player.setCollidable(true);
         resetCoreAttrs(player, true);
         Double original = room.originalMaxHealth.get(player.getUniqueId());
         if (original != null) setAttr(player, Attribute.MAX_HEALTH, original);
         player.setHealth(Math.min(maxHealth(player), Math.max(1.0D, maxHealth(player))));
         player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        downingPlayers.remove(player.getUniqueId());
     }
 
     private void resetCoreAttrs(Player player, boolean full) {

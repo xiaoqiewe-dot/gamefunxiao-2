@@ -138,3 +138,18 @@ sounds:
     - { sound: "block.amethyst_block.chime", volume: 0.28, pitch: 1.55, delay: 3 }
   toolkit.page:
     - { sound: "item.book.page_turn", volume: 0.58, pitch: 1.45, delay: 0 }
+  final.kill.crit:
+    - { sound: "entity.player.attack.crit", volume: 0.85, pitch: 1.15, delay: 0 }
+    - { sound: "entity.experience_orb.pickup", volume: 0.32, pitch: 1.85, delay: 3 }
+  final.kill.mace:
+    - { sound: "entity.player.attack.crit", volume: 0.80, pitch: 0.82, delay: 0 }
+    - { sound: "entity.generic.explode", volume: 0.42, pitch: 1.55, delay: 2 }
+  final.kill.spear:
+    - { sound: "entity.player.attack.sweep", volume: 0.82, pitch: 1.38, delay: 0 }
+    - { sound: "item.trident.throw", volume: 0.36, pitch: 1.72, delay: 2 }
+  final.kill.pickaxe:
+    - { sound: "block.grindstone.use", volume: 0.75, pitch: 1.28, delay: 0 }
+    - { sound: "entity.player.attack.crit", volume: 0.42, pitch: 1.45, delay: 2 }
+  game.end_dragon:
+    - { sound: "entity.ender_dragon.death", volume: 0.98, pitch: 1.00, delay: 0 }
+    - { sound: "entity.ender_dragon.growl", volume: 0.58, pitch: 0.86, delay: 10 }

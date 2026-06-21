@@ -17,12 +17,18 @@ final class InventorySnapshot {
     final ItemStack[] armor;
     final ItemStack offhand;
     final int heldSlot;
+    final int level;
+    final float exp;
+    final int totalExperience;
 
     InventorySnapshot(Player player) {
         location = player.getLocation().clone();
         gameMode = player.getGameMode();
         allowFlight = player.getAllowFlight();
         flying = player.isFlying();
+        level = player.getLevel();
+        exp = player.getExp();
+        totalExperience = player.getTotalExperience();
         PlayerInventory inv = player.getInventory();
         contents = cloneItems(inv.getContents());
         armor = cloneItems(inv.getArmorContents());
@@ -32,6 +38,7 @@ final class InventorySnapshot {
 
     void restore(Player player) {
         restoreInventoryOnly(player);
+        restoreExperience(player);
         player.setGameMode(gameMode);
         player.setAllowFlight(allowFlight);
         player.setFlying(flying);
@@ -47,6 +54,15 @@ final class InventorySnapshot {
         inv.setArmorContents(cloneItems(armor));
         inv.setItemInOffHand(offhand == null ? null : offhand.clone());
         inv.setHeldItemSlot(Math.max(0, Math.min(8, heldSlot)));
+    }
+
+    private void restoreExperience(Player player) {
+        player.setExp(0.0F);
+        player.setLevel(0);
+        player.setTotalExperience(0);
+        player.setTotalExperience(Math.max(0, totalExperience));
+        player.setLevel(Math.max(0, level));
+        player.setExp(Math.max(0.0F, Math.min(1.0F, exp)));
     }
 
     static ItemStack[] cloneItems(ItemStack[] source) {
