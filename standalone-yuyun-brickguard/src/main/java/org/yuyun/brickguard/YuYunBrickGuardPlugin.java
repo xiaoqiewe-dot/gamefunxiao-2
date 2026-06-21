@@ -85,6 +85,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     private final Map<UUID, Long> shoutCooldowns = new HashMap<>();
     private final Map<UUID, Long> clickCooldowns = new HashMap<>();
     private final Set<UUID> downingPlayers = new HashSet<>();
+    private final Set<UUID> homeNightVisionPlayers = new HashSet<>();
     private final Set<UUID> respawnGhosts = new HashSet<>();
     private BukkitTask ticker;
     private int roomCounter;
@@ -104,7 +105,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             Objects.requireNonNull(getCommand("brickguard")).setTabCompleter(this);
         }
         ticker = Bukkit.getScheduler().runTaskTimer(this, this::tick, 20L, 20L);
-        getLogger().info("雨云板砖守卫战已启动。");
+        getLogger().info("板砖守卫战已启动。");
     }
 
     @Override
@@ -152,7 +153,11 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     }
 
     private boolean isAdmin(CommandSender sender) {
-        return sender.hasPermission("yuyunbrickguard.admin");
+        return sender.hasPermission("brickguard.admin") || sender.hasPermission("yuyunbrickguard.admin");
+    }
+
+    private boolean hasUsePermission(CommandSender sender) {
+        return sender.hasPermission("brickguard.use") || sender.hasPermission("yuyunbrickguard.use");
     }
 
     private boolean isPlayer(CommandSender sender) {
@@ -168,7 +173,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             return true;
         }
         String sub = args[0].toLowerCase(Locale.ROOT);
-        if (!sender.hasPermission("yuyunbrickguard.use")) {
+        if (!hasUsePermission(sender)) {
             msg(sender, "§x§F§F§8§8§5§5你没有权限进入这场守卫战。");
             return true;
         }
@@ -350,7 +355,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
     private void openMainMenu(Player player) {
         Inventory inv = Bukkit.createInventory(player, 54, Text.c("§0§l板砖守卫战"));
         frame(inv, Material.ORANGE_STAINED_GLASS_PANE, "§x§F§F§8§8§2§2你看我干什么");
-        inv.setItem(4, items.item(Material.BRICK, "§x§F§F§8§8§2§2[ 板砖守卫战 ]", List.of("§f- §a雨云主题对抗")));
+        inv.setItem(4, items.item(Material.BRICK, "§x§F§F§8§8§2§2[ 板砖守卫战 ]", List.of("§f- §a双队主题对抗")));
         inv.setItem(22, items.action(Material.NETHER_STAR, "§x§7§D§F§F§C§8[ 快速加入 ]", List.of("§f- §a进入等待中的房间"), "main_quick"));
         inv.setItem(0, items.action(Material.EMERALD, "§x§7§D§F§F§C§8[ 排行榜 ]", List.of("§f- §a查看本场积分"), "main_rank"));
         inv.setItem(8, items.action(Material.BOOK, "§x§7§D§F§F§C§8[ 房间列表 ]", List.of("§f- §a查看等待中的房间"), "main_rooms"));
@@ -936,7 +941,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         if (spawn != null) player.teleport(spawn);
         equipLeather(player, Team.BRICK);
         player.getInventory().addItem(items.pickaxe(1));
-        player.getInventory().addItem(items.gameItem(Material.COOKED_BEEF, 8, "§x§F§F§B§B§6§6云灵狐便当", List.of("§f- §a雨云补给"), Team.BRICK, "food"));
+        player.getInventory().addItem(items.gameItem(Material.COOKED_BEEF, 8, "§x§F§F§B§B§6§6战场便当", List.of("§f- §a战场补给"), Team.BRICK, "food"));
         giveShoutItem(player, Team.BRICK);
     }
 
@@ -945,7 +950,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         if (core) equipNetherCore(player);
         else equipLeather(player, Team.NETHER);
         player.getInventory().addItem(items.gameItem(Material.STONE_SWORD, 1, "§x§6§6§1§9§0§0下界砖短剑", List.of("§f- §a基础近战武器"), Team.NETHER, "weapon"));
-        player.getInventory().addItem(items.gameItem(Material.ROTTEN_FLESH, 2, "§x§6§6§1§9§0§0云灵狐云用粮食", List.of("§f- §a濒死状态下食用会重置时间"), Team.NETHER, "nether_food"));
+        player.getInventory().addItem(items.gameItem(Material.ROTTEN_FLESH, 2, "§x§6§6§1§9§0§0濒死补给", List.of("§f- §a濒死状态下食用会重置时间"), Team.NETHER, "nether_food"));
         giveShoutItem(player, Team.NETHER);
     }
 
@@ -1009,6 +1014,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             if (room.isActive(player)) {
                 enforceBoundary(room, player);
                 repairPickaxeNearCore(room, player);
+                applyHomeNightVision(room, player);
                 if (Objects.equals(room.corePlayer, player.getUniqueId())) player.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, false, false, false));
             }
         }
@@ -1018,6 +1024,23 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         tickDying(room);
         tickRespawns(room);
         updateScoreboards(room);
+    }
+
+    private void applyHomeNightVision(Room room, Player player) {
+        UUID uuid = player.getUniqueId();
+        if (room.team(player.getUniqueId()) == Team.NETHER && player.getWorld() == room.netherWorld) {
+            PotionEffect current = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
+            if (current == null || current.getDuration() <= 260) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, 260, 0, true, false, false));
+                homeNightVisionPlayers.add(uuid);
+            }
+            return;
+        }
+        if (homeNightVisionPlayers.remove(uuid)) {
+            PotionEffect effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION);
+            if (effect == null || effect.getDuration() > 260 || effect.getAmplifier() != 0) return;
+            player.removePotionEffect(PotionEffectType.NIGHT_VISION);
+        }
     }
 
     private void createBossBars(Room room) {
@@ -1469,39 +1492,39 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
 
     private List<Product> products(Team team) {
         if (team == Team.BRICK) return List.of(
-                new Product(Material.BRICKS, 32, "§x§f§f§7§c§0§0云上板砖包", List.of("§f- §a搭建防线"), 16, Material.BRICK, "板砖"),
-                new Product(Material.BRICK_STAIRS, 16, "§x§f§f§7§c§0§0起程斜坡砖", List.of("§f- §a调整进攻角度"), 12, Material.BRICK, "板砖"),
-                new Product(Material.BRICK_SLAB, 24, "§x§f§f§7§c§0§0轻量云砖板", List.of("§f- §a补小缺口"), 10, Material.BRICK, "板砖"),
-                new Product(Material.IRON_SWORD, 1, "§x§f§f§7§c§0§0天气狐短剑", List.of("§f- §a稳定的近战选择"), 24, Material.BRICK, "板砖"),
-                new Product(Material.IRON_AXE, 1, "§x§f§f§7§c§0§0雨云断线斧", List.of("§f- §a爆发更高"), 28, Material.BRICK, "板砖"),
-                new Product(Material.CROSSBOW, 1, "§x§f§f§7§c§0§0云盾机弩", List.of("§f- §a远程压制"), 20, Material.BRICK, "板砖"),
+                new Product(Material.BRICKS, 32, "§x§f§f§7§c§0§0板砖包", List.of("§f- §a搭建防线"), 16, Material.BRICK, "板砖"),
+                new Product(Material.BRICK_STAIRS, 16, "§x§f§f§7§c§0§0斜坡砖", List.of("§f- §a调整进攻角度"), 12, Material.BRICK, "板砖"),
+                new Product(Material.BRICK_SLAB, 24, "§x§f§f§7§c§0§0轻量砖板", List.of("§f- §a补小缺口"), 10, Material.BRICK, "板砖"),
+                new Product(Material.IRON_SWORD, 1, "§x§f§f§7§c§0§0板砖短剑", List.of("§f- §a稳定的近战选择"), 24, Material.BRICK, "板砖"),
+                new Product(Material.IRON_AXE, 1, "§x§f§f§7§c§0§0断线斧", List.of("§f- §a爆发更高"), 28, Material.BRICK, "板砖"),
+                new Product(Material.CROSSBOW, 1, "§x§f§f§7§c§0§0防御机弩", List.of("§f- §a远程压制"), 20, Material.BRICK, "板砖"),
                 new Product(Material.ARROW, 16, "§x§f§f§7§c§0§0流量箭袋", List.of("§f- §a给弩使用"), 8, Material.BRICK, "板砖"),
-                new Product(Material.IRON_SPEAR, 1, "§x§f§f§7§c§0§0云灵狐长矛", List.of("§f- §a追击核心玩家"), 2, Material.DIAMOND, "钻石"),
+                new Product(Material.IRON_SPEAR, 1, "§x§f§f§7§c§0§0战矛", List.of("§f- §a追击核心玩家"), 2, Material.DIAMOND, "钻石"),
                 new Product(Material.MACE, 1, "§x§f§f§7§c§0§0裂砖重锤", List.of("§f- §a高处落击时爆发更高"), 5, Material.DIAMOND, "钻石", 2),
                 new Product(Material.SHIELD, 1, "§x§f§f§7§c§0§0防御工单盾", List.of("§f- §a挡住一轮爆发"), 18, Material.BRICK, "板砖"),
-                new Product(Material.IRON_CHESTPLATE, 1, "§x§f§f§7§c§0§0标准云甲", List.of("§f- §a提升生存"), 36, Material.BRICK, "板砖"),
-                new Product(Material.DIAMOND_CHESTPLATE, 1, "§x§f§f§7§c§0§0无法计算的损失", List.of("§f- §a很贵，但很硬"), 6, Material.DIAMOND, "钻石"),
-                new Product(Material.COOKED_BEEF, 8, "§x§F§F§B§B§6§6云灵狐热饭", List.of("§f- §a快速补给"), 10, Material.BRICK, "板砖"),
-                new Product(Material.GOLDEN_APPLE, 1, "§x§F§F§B§B§6§6雨云应急苹果", List.of("§f- §a关键时刻吃"), 2, Material.DIAMOND, "钻石"),
-                new Product(Material.BEACON, 1, "§x§7§D§F§F§C§8天气狐信标", List.of("§f- §a放置后给附近队友发光提示"), 8, Material.DIAMOND, "钻石"),
+                new Product(Material.IRON_CHESTPLATE, 1, "§x§f§f§7§c§0§0标准板甲", List.of("§f- §a提升生存"), 36, Material.BRICK, "板砖"),
+                new Product(Material.DIAMOND_CHESTPLATE, 1, "§x§f§f§7§c§0§0加固胸甲", List.of("§f- §a很贵，但很硬"), 6, Material.DIAMOND, "钻石"),
+                new Product(Material.COOKED_BEEF, 8, "§x§F§F§B§B§6§6热饭", List.of("§f- §a快速补给"), 10, Material.BRICK, "板砖"),
+                new Product(Material.GOLDEN_APPLE, 1, "§x§F§F§B§B§6§6应急苹果", List.of("§f- §a关键时刻吃"), 2, Material.DIAMOND, "钻石"),
+                new Product(Material.BEACON, 1, "§x§7§D§F§F§C§8战场信标", List.of("§f- §a放置后给附近队友发光提示"), 8, Material.DIAMOND, "钻石"),
                 new Product(Material.IRON_PICKAXE, 1, "§x§e§f§4§d§0§0狐稿升级券", List.of("§f- §a升级手上的狐稿", "§f- §7最高可升到下界合金稿"), 3, Material.DIAMOND, "钻石", 1)
         );
         return List.of(
-                new Product(Material.NETHER_BRICKS, 32, "§x§6§6§1§9§0§0下界云砖包", List.of("§f- §a搭建突袭路线"), 16, Material.NETHER_BRICK, "下界砖"),
+                new Product(Material.NETHER_BRICKS, 32, "§x§6§6§1§9§0§0下界砖包", List.of("§f- §a搭建突袭路线"), 16, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.BLACKSTONE, 24, "§x§6§6§1§9§0§0黑石工单", List.of("§f- §a压迫式推进"), 12, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.OBSIDIAN, 2, "§x§6§6§1§9§0§0黑曜石缓存", List.of("§f- §a用于补传送门进度"), 3, Material.GOLD_NUGGET, "金粒矿"),
-                new Product(Material.STONE_SWORD, 1, "§x§6§6§1§9§0§0云端断剑", List.of("§f- §a廉价武器"), 12, Material.NETHER_BRICK, "下界砖"),
+                new Product(Material.STONE_SWORD, 1, "§x§6§6§1§9§0§0断剑", List.of("§f- §a廉价武器"), 12, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.IRON_PICKAXE, 1, "§x§6§6§1§9§0§0下界开采稿", List.of("§f- §a更快挖开下界砖矿点", "§f- §7空手也能挖，这个只是更顺手"), 20, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.IRON_AXE, 1, "§x§6§6§1§9§0§0宕机重启斧", List.of("§f- §a近战破口"), 2, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.CROSSBOW, 1, "§x§6§6§1§9§0§0节点弩", List.of("§f- §a远程骚扰"), 24, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.ARROW, 16, "§x§6§6§1§9§0§0带宽箭袋", List.of("§f- §a远程弹药"), 8, Material.NETHER_BRICK, "下界砖"),
-                new Product(Material.GOLDEN_SPEAR, 1, "§x§6§6§1§9§0§0天气狐长矛", List.of("§f- §a适合突进"), 3, Material.GOLD_NUGGET, "金粒矿"),
+                new Product(Material.GOLDEN_SPEAR, 1, "§x§6§6§1§9§0§0长矛", List.of("§f- §a适合突进"), 3, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.MACE, 1, "§x§6§6§1§9§0§0熔岩重锤", List.of("§f- §a压制板砖队防线"), 4, Material.GOLD_NUGGET, "金粒矿", 2),
-                new Product(Material.WIND_CHARGE, 4, "§x§7§D§F§F§C§8雨云风弹", List.of("§f- §a打开距离"), 2, Material.GOLD_NUGGET, "金粒矿"),
+                new Product(Material.WIND_CHARGE, 4, "§x§7§D§F§F§C§8风弹", List.of("§f- §a打开距离"), 2, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.IRON_CHESTPLATE, 1, "§x§6§6§1§9§0§0下界工单甲", List.of("§f- §a提高容错"), 28, Material.NETHER_BRICK, "下界砖"),
                 new Product(Material.DIAMOND_LEGGINGS, 1, "§x§6§6§1§9§0§0无法计算的护腿", List.of("§f- §a随机纹饰款"), 5, Material.GOLD_NUGGET, "金粒矿"),
-                new Product(Material.ROTTEN_FLESH, 3, "§x§6§6§1§9§0§0云灵狐云用粮食", List.of("§f- §a濒死状态重置时间"), 10, Material.NETHER_BRICK, "下界砖"),
-                new Product(Material.GOLDEN_APPLE, 1, "§x§F§F§B§B§6§6雨云缓存苹果", List.of("§f- §a突围前吃"), 3, Material.GOLD_NUGGET, "金粒矿"),
+                new Product(Material.ROTTEN_FLESH, 3, "§x§6§6§1§9§0§0濒死补给", List.of("§f- §a濒死状态重置时间"), 10, Material.NETHER_BRICK, "下界砖"),
+                new Product(Material.GOLDEN_APPLE, 1, "§x§F§F§B§B§6§6缓存苹果", List.of("§f- §a突围前吃"), 3, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.POTION, 1, "§x§6§6§1§9§0§0雾隐药水", List.of("§f- §a短时间隐藏进攻痕迹", "§f- §7隐身或蹲下时挖核心不会显示名字"), 4, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.BEACON, 1, "§x§7§D§F§F§C§8天气狐信标", List.of("§f- §a标记战线"), 6, Material.GOLD_NUGGET, "金粒矿"),
                 new Product(Material.NETHERITE_SWORD, 1, "§x§6§6§1§9§0§0核心保护协议", List.of("§f- §a守护核心玩家"), 9, Material.GOLD_NUGGET, "金粒矿", 3)
@@ -2564,7 +2587,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         if (!room.dyingSeconds.containsKey(player.getUniqueId())) return;
         if (event.getItem().getType() == Material.ROTTEN_FLESH && "nether_food".equals(items.typeOf(event.getItem()))) {
             room.dyingSeconds.put(player.getUniqueId(), 90);
-            msg(player, "§x§6§6§1§9§0§0云灵狐云用粮食稳住了你的气息。");
+            msg(player, "§x§6§6§1§9§0§0濒死补给稳住了你的气息。");
             playSound(player, "food.consume", Sound.ITEM_TOTEM_USE, 0.9F, 1.45F);
         }
     }
@@ -2700,7 +2723,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         setAttr(player, Attribute.ATTACK_SPEED, 4.6D);
         setAttr(player, Attribute.MAX_HEALTH, Math.max(maxHealth(player), 220.0D));
         player.setHealth(Math.min(maxHealth(player), 220.0D));
-        msg(player, "§x§6§6§1§9§0§0你进入濒死状态，吃云灵狐云用粮食可以重置时间。");
+        msg(player, "§x§6§6§1§9§0§0你进入濒死状态，吃濒死补给可以重置时间。");
     }
 
     private void tickDying(Room room) {
@@ -2885,7 +2908,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
             case BRICK -> "brick";
             case NETHER -> "nether";
         };
-        return "ybg_room_" + room.runtimeKey + "_" + suffix;
+        return "brickguard_room_" + room.runtimeKey + "_" + suffix;
     }
 
     private World cloneWorld(World source, String targetName) {
@@ -2949,7 +2972,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
         try {
             java.nio.file.Path worldRoot = Bukkit.getWorldContainer().toPath().toAbsolutePath().normalize();
             java.nio.file.Path target = folder.toPath().toAbsolutePath().normalize();
-            if (!target.startsWith(worldRoot) || !folder.getName().startsWith("ybg_room_")) {
+            if (!target.startsWith(worldRoot) || !(folder.getName().startsWith("brickguard_room_") || folder.getName().startsWith("ybg_room_"))) {
                 getLogger().warning("拒绝删除非守卫战临时世界目录: " + target);
                 return false;
             }
@@ -3171,6 +3194,7 @@ public final class YuYunBrickGuardPlugin extends JavaPlugin implements Listener,
 
     private void resetPlayer(Player player, Room room) {
         leaveRespawnGhost(room, player);
+        homeNightVisionPlayers.remove(player.getUniqueId());
         player.getActivePotionEffects().forEach(effect -> player.removePotionEffect(effect.getType()));
         clearExperience(player);
         player.setInvulnerable(false);

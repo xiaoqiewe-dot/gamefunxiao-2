@@ -99,7 +99,7 @@ final class ItemFactory {
         List<String> lore = new ArrayList<>();
         lore.add(team == Team.NETHER ? "§f- §a下界砖队矿稿" : "§f- §a板砖队专用矿稿");
         lore.add("§f- §7靠近核心会慢慢修复耐久");
-        lore.add("§8[ 云灵狐工坊 ]");
+        lore.add("§8[ 板砖工坊 ]");
         ItemStack item = gameItem(material, 1, name, lore, team, "pickaxe");
         item.editMeta(meta -> {
             meta.getPersistentDataContainer().set(levelKey, PersistentDataType.INTEGER, Math.max(1, Math.min(5, level)));

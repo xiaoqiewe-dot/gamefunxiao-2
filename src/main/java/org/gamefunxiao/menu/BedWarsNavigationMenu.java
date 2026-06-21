@@ -85,9 +85,9 @@ public class BedWarsNavigationMenu extends BaseMenu {
     }
 
     private void runBrickGuardCommand(String subCommand, Sound sound, float volume, float pitch) {
-        if (Bukkit.getPluginManager().getPlugin("YuYunBrickGuard") == null) {
+        if (Bukkit.getPluginManager().getPlugin("BrickGuard") == null && Bukkit.getPluginManager().getPlugin("YuYunBrickGuard") == null) {
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 0.8f, 0.85f);
-            player.sendMessage("§x§F§F§8§8§5§5起床战争还没有加载。");
+            player.sendMessage("§x§F§F§8§8§5§5板砖守卫战还没有加载。");
             return;
         }
 
