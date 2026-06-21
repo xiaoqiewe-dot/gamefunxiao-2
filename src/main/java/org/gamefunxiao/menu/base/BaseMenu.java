@@ -179,7 +179,7 @@ public abstract class BaseMenu implements InventoryHolder {
                 "   §8[§x§5§5§F§F§D§D↩ §x§7§7§F§F§E§E返§x§9§9§F§F§F§F回§x§B§B§E§E§F§F主§x§D§D§D§D§F§F菜§x§F§F§C§C§F§F单§8]",
                 "§8· · · · · · · · · · · · · ·",
                 "§f- §a点击返回服务器主菜单",
-                "§f- §7执行命令: §e/" + plugin.getConfigManager().getCloseButtonReturnCommand(),
+                "§f- §7适合从服务器菜单进入时使用",
                 "§8· · · · · · · · · · · · · ·");
         }
         return createPlainCloseButton();

@@ -289,9 +289,6 @@ public class ScoreboardManager {
         if (room.getGameMode() == GameMode.LUCKY_PILLARS) {
             return getLuckyPillarsWaitingLines(room);
         }
-        if (room.getGameMode() == GameMode.BRICK_GUARD) {
-            return getBrickGuardWaitingLines(room);
-        }
         List<String> lines = new ArrayList<>();
 
         lines.add("§7");
@@ -508,9 +505,6 @@ public class ScoreboardManager {
         if (room.getGameMode().isLuckyPillars()) {
             return getLuckyPillarsPlayingLines(room);
         }
-        if (room.getGameMode().isBrickGuard()) {
-            return getBrickGuardPlayingLines(room);
-        }
         if (room.getGameMode().isIndependentMode()) {
             return getIndependentModePlayingLines(room);
         }
@@ -617,7 +611,7 @@ public class ScoreboardManager {
         lines.add("§7");
         if (!room.isGameActuallyStarted()) {
             lines.add("§e§l准备开始...");
-            lines.add("§f- §7独立柱台与玻璃笼正在就位");
+            lines.add("§f- §7高空柱台与玻璃笼正在就位");
         } else {
             lines.add("§e§l经典规则");
             lines.add("§f- §6开局在玻璃笼里倒计时");
@@ -646,7 +640,7 @@ public class ScoreboardManager {
         }
         lines.add("§7");
         lines.add("§e§l经典说明");
-        lines.add("§f- §6高空独立柱台 + 玻璃笼倒计时");
+        lines.add("§f- §6高空柱台 + 玻璃笼倒计时");
         lines.add("§f- §a开局破笼后进入随机原版物品乱斗");
         lines.add("§f- §c最后存活的人获胜");
         lines.add("§7");
@@ -661,57 +655,13 @@ public class ScoreboardManager {
         lines.add("§f👥 参赛人数: §b" + room.getPlayerCount());
         lines.add("§f已进行: §e" + formatElapsedTime(room.getGameDuration()));
         lines.add("§7");
-        lines.add("§e§l独立模式");
+        lines.add("§e§l专属玩法");
         lines.add("§f- §b当前不会启用猎物 / 猎人流程");
         lines.add("§f- §a不会出现选猎物、选世界、猎人盲目提示");
         lines.add("§f- §d可继续在此基础上单独扩展新玩法");
         lines.add("§7");
         lines.add("§8HunterGame.server");
         lines.add("§7");
-        return lines;
-    }
-
-    private List<String> getBrickGuardWaitingLines(GameRoom room) {
-        List<String> lines = new ArrayList<>();
-        lines.add("§7");
-        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
-        lines.add("§f🏷 房间号: §6" + room.getRoomId());
-        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-        lines.add("§7");
-        if (room.getState() == RoomState.STARTING) {
-            lines.add("§f距开始: §e" + formatCountdown(room.getCountdown()));
-        } else {
-            lines.add("§f状态: §6等待更多玩家");
-        }
-        lines.add("§7");
-        lines.add("§e§l规则摘要");
-        lines.add("§f- §6板砖队守护核心方块");
-        lines.add("§f- §c下界队保护核心玩家");
-        lines.add("§f- §e一小时超时平局");
-        lines.add("§7");
-        lines.add("§8BrickGuard.mode");
-        return lines;
-    }
-
-    private List<String> getBrickGuardPlayingLines(GameRoom room) {
-        List<String> lines = new ArrayList<>();
-        lines.add("§7");
-        lines.add("§f🕹 模式: " + getColoredGameMode(room.getGameMode()));
-        lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-        lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-        lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
-        lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-        lines.add("§f☠ 濒死人数: §d" + plugin.getBrickGuardManager().getDyingCount(room));
-        lines.add("§f⌛ 剩余时间: §e" + formatCountdown((int) plugin.getBrickGuardManager().getRemainingTimeSeconds(room)));
-        lines.add("§7");
-        lines.add("§e§l战场提示");
-        lines.add("§f- §6狐稿靠近核心会自动修复");
-        lines.add("§f- §c濒死记得吃下界特色小吃");
-        lines.add("§f- §7核心玩家全局发光");
-        lines.add("§7");
-        lines.add("§8BrickGuard.mode");
         return lines;
     }
 
@@ -855,7 +805,6 @@ public class ScoreboardManager {
             case FLASH_TOURNAMENT -> "§x§F§F§F§F§9§9闪§x§F§F§D§D§5§5光 §c§l赛事";
             case END_FLASH -> "§x§B§B§8§8§F§F终§x§D§D§A§A§F§F章§x§F§F§D§D§8§8·§x§F§F§F§F§A§A闪§x§D§D§F§F§C§C光"; // 终章渐变
             case LUCKY_PILLARS -> "§x§F§F§D§D§5§5幸§x§F§F§C§C§6§6运§x§F§F§B§B§7§7之§x§F§F§A§A§8§8柱";
-            case BRICK_GUARD -> "§x§F§F§7§C§0§0板§x§F§F§9§0§2§0砖§x§D§D§5§5§1§1守§x§9§9§3§3§0§0卫§x§6§6§1§9§0§0战";
             case LUCKY_PILLARS_PVP -> "§x§F§F§8§8§5§5幸§x§F§F§A§A§6§6运§x§F§F§C§C§7§7之§x§F§F§E§E§8§8柱§x§F§F§6§6§6§6PVP";
             case TNT_RUN -> "§x§F§F§8§8§5§5T§x§F§F§9§9§6§6N§x§F§F§A§A§7§7T§x§F§F§B§B§8§8跑§x§F§F§C§C§9§9酷";
             case BLOCK_PARTY -> "§x§D§D§8§8§F§F方§x§C§C§9§9§F§F块§x§B§B§A§A§F§F派§x§A§A§B§B§F§F对";
@@ -925,19 +874,6 @@ public class ScoreboardManager {
             lines.add("§f游戏时长: §e" + formatElapsedTime(Math.max(0L, System.currentTimeMillis() - room.getGameStartTime())));
             lines.add("§7");
             lines.add("§8LuckyPillars.classic");
-            lines.add("§7");
-            return lines;
-        }
-        if (room.getGameMode().isBrickGuard()) {
-            lines.add("§x§F§F§7§C§0§0▣ §6§l板砖守卫战已结束");
-            lines.add("§7");
-            lines.add("§f结果: §e" + plugin.getBrickGuardManager().getEndedSummary(room));
-            lines.add("§f🧱 板砖队: §a" + plugin.getBrickGuardManager().getBrickTeamCount(room));
-            lines.add("§f🔥 下界队: §c" + plugin.getBrickGuardManager().getNetherTeamCount(room));
-            lines.add("§f👑 核心玩家: §6" + plugin.getBrickGuardManager().getCorePlayerName(room));
-            lines.add("§f❤ 核心血量: §c" + plugin.getBrickGuardManager().getCoreHealth(room) + "§7/§e" + plugin.getBrickGuardManager().getMaxCoreHealth(room));
-            lines.add("§7");
-            lines.add("§8BrickGuard.mode");
             lines.add("§7");
             return lines;
         }

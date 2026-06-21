@@ -1,6 +1,6 @@
 # GameFunXiao 消息配置文件
 # 配置版本（请勿手动修改）
-config_version: 13
+config_version: 15
 
 # 通用消息
 general:
@@ -53,7 +53,7 @@ room:
   join_failed: "§x§F§F§5§5§5§5✘ §c无法加入房间！房间已满或不允许加入。"
   invite_only: "§x§F§F§6§6§0§0🔒 §c这个房间已开启仅邀请进入，你需要先被房主邀请。"
   child_server_no_idle_node: "§x§F§F§6§6§0§0🧩 §c当前没有空闲的 GameFun 子服节点，稍后再试试吧。"
-  child_server_starting: "§x§8§8§D§D§F§F🛰 §b正在为你启动独立小游戏子服，请稍候..."
+  child_server_starting: "§x§8§8§D§D§F§F🛰 §b正在为你启动小游戏子服，请稍候..."
   child_server_ready: "§x§5§5§F§F§A§A✔ §a子服已就绪，正在把你送过去。"
   child_server_start_failed: "§x§F§F§5§5§5§5✘ §c子服启动失败，已把你的状态恢复回来。"
   child_server_join_loading: "§x§B§B§D§D§F§F🌀 §b正在连接这个房间所在的子服..."
@@ -113,45 +113,12 @@ room:
   rejoined: "§x§5§5§F§F§A§A✔ §a成功重新加入游戏！"
   rejoin_failed: "§x§F§F§5§5§5§5✘ §c重新加入失败！游戏可能已经结束。"
   no_hunters_left: "§x§F§F§8§8§8§8⚠ §c游戏中已经没有其他猎人了，无法重新加入！"
-  brick_guard_map_not_found: "§x§F§F§8§8§5§5⚠ §c找不到板砖守卫战地图 §e{map}§c，请检查地图配置。"
-
-brick_guard:
-  guide_header: "§x§F§F§7§C§0§0▣ §x§F§F§9§0§2§0雨云 §x§D§D§5§5§1§1· §x§9§9§3§3§0§0板砖守卫战 §7玩法要点"
-  menu_opened: "§x§F§F§9§0§2§0已打开板砖守卫战导航菜单。"
-  quick_matching: "§x§F§F§A§4§4§0正在为你匹配板砖守卫战房间。"
-  room_created: "§x§5§5§F§F§A§A已创建板砖守卫战房间 §e{room_id}§a。"
-  use_dedicated_branch: "§x§F§F§9§0§2§0这是独立玩法，请使用 §e/gamefunxiao bg create §6或 §e/gamefunxiao command create brick_guard §6创建。"
-
-brick_guard:
-  guide_header: "§x§F§F§7§C§0§0▣ §x§F§F§9§0§2§0雨云 §x§D§D§5§5§1§1· §x§9§9§3§3§0§0板砖守卫战 §7玩法要点"
-  menu_opened: "§x§F§F§9§0§2§0已打开板砖守卫战导航菜单。"
-  quick_matching: "§x§F§F§A§4§4§0正在为你匹配板砖守卫战房间。"
-  room_created: "§x§5§5§F§F§A§A已创建板砖守卫战房间 §e{room_id}§a。"
-  use_dedicated_branch: "§x§F§F§9§0§2§0这是独立玩法，请使用 §e/gamefunxiao bg create §6或 §e/gamefunxiao command create brick_guard §6创建。"
-  join_brick_team: "§x§F§F§7§C§0§0你已加入板砖队。"
-  join_nether_team: "§x§6§6§1§9§0§0你已加入下界砖队。"
-  team_balance_blocked: "§x§F§F§8§8§5§5队伍人数将失衡，当前不能这样选。"
-  core_transfer_unavailable: "§x§F§F§8§8§5§5核心转移窗口已结束，或你已经转移过一次。"
-  core_transfer_failed: "§x§F§F§8§8§5§5核心转移失败，请重新确认目标队友是否在线。"
-  core_transferred: "§x§6§6§1§9§0§0下界核心已转移给 §e{player}§x§6§6§1§9§0§0。"
-  core_player_dead: "§x§6§6§1§9§0§0下界核心玩家已阵亡！§f全队进入混乱状态。"
-  dying_started: "§x§D§D§8§8§F§F你进入了濒死状态，§e1分30秒内必须续命。"
-  dying_reset: "§x§5§5§F§F§A§A你吃下了下界特色小吃，濒死倒计时已重置。"
-  respawned: "§x§5§5§F§F§A§A你已重新回到战场。"
-  fox_pick_max: "§x§F§F§8§8§5§5狐稿已经满级了。"
-  fox_pick_need_kills: "§x§F§F§8§8§5§5升级狐稿还需要更多击杀，至少要达到 §e{kills} §c次。"
-  fox_pick_need_materials: "§x§F§F§8§8§5§5升级狐稿需要 §e{brick} §6板砖 §c和 §e{diamond} §b钻石。"
-  fox_pick_upgraded: "§x§5§5§F§F§A§A狐稿升级成功！"
-  enemy_trade_denied: "§x§F§F§8§8§5§5你不能使用敌方的专属商人。"
-  totem_used: "§x§F§F§D§7§0§0不死图腾触发，你带着装备回到了核心起点。"
-  brick_win: "§x§F§F§7§C§0§0板砖队胜利！§f下界核心与队伍全部倒下。"
-  nether_win: "§x§6§6§1§9§0§0下界砖队胜利！§f板砖核心已被完全摧毁。"
-  draw: "§x§D§D§8§8§F§F板砖守卫战超时，双方平局。"
 
 # 游戏消息
 game:
   countdown: "§x§F§F§E§E§5§5⏱ §e猎物将在 §c{time} §e后开始选择世界！"
-  independent_countdown: "§x§8§8§D§D§F§F⏱ §b独立模式将在 §e{time} §b后开始！"
+  independent_countdown: "§x§8§8§D§D§F§F⏱ §b本局将在 §e{time} §b后开始！"
+  mode_countdown: "§x§8§8§D§D§F§F⏱ §b{mode} 将在 §e{time} §b后开始！"
   countdown_speedup: "§x§5§5§F§F§A§A⚡ §a投票通过！倒计时已加速至1分钟！"
   countdown_force_start: "§x§F§F§5§5§5§5⚡ §c管理员强制跳至10秒倒计时！"
   force_start_already_used: "§x§F§F§8§8§8§8⚠ §c这个房间的提前开始已经被其他管理员使用过了！"
@@ -201,16 +168,13 @@ game:
   nether_position_vote_finished: "§x§F§F§B§B§6§6🧭 §e猎人落点投票时间结束，正在开始传送..."
   flash_mode_direct_start: "§x§F§F§D§7§0§0⚡ §e闪光模式已锁定！§f本局不会进入世界选择，正在直接传送开局..."
   end_flash_mode_direct_start: "§x§B§B§8§8§F§F✦ §d终章 · 闪光已锁定！§f不会进入世界选择，正在直接传送至末地开局..."
-  lucky_pillars_generating: "§x§F§F§D§D§5§5🍀 §e幸运之柱正在生成：§f高空独立柱、玻璃笼与观战点正在搭建。"
+  lucky_pillars_generating: "§x§F§F§D§D§5§5🍀 §e幸运之柱正在生成：§f高空柱台、玻璃笼与观战点正在搭建。"
   lucky_pillars_size_selected: "§x§F§F§D§D§5§5🍀 §a本局地图大小：§e{size} §7(上限 §b{max} §7人)，§a开局自动生成运行地图。"
   lucky_pillars_start: "§x§F§F§D§D§5§5🍀 §e幸运之柱开始！§f玻璃笼已打开，随机物品乱斗正式开始。"
   lucky_pillars_eliminated: "§x§F§F§8§8§5§5☠ §e{player} §c被淘汰了！§7剩余 §a{alive} §7人。"
   lucky_pillars_win: "§x§F§F§D§D§5§5🍀 §a§l幸运之柱胜利！§f最后存活者: §e{winner}"
   lucky_pillars_cancelled: "§x§F§F§8§8§5§5⊗ §c幸运之柱人数不足，已取消本局。"
   lucky_pillars_countdown: "§x§F§F§D§D§5§5🍀 §e幸运之柱将在 §c{time} §e后开始！"
-  brick_guard_countdown: "§x§F§F§7§C§0§0▣ §e板砖守卫战将在 §c{time} §e后开始！"
-  brick_guard_cancelled: "§x§F§F§7§C§0§0▣ §c板砖守卫战人数不足，已取消本局。"
-  brick_guard_started: "§x§F§F§7§C§0§0▣ §6雨云 · 板砖守卫战 §f已开局，§c破坏对面的核心才能获胜！"
   lucky_pillars_event_arrow_rain: "§x§F§F§D§D§5§5🍀 §c万箭齐发：§f抬头，小心头顶箭雨。"
   lucky_pillars_event_supply: "§x§F§F§D§D§5§5🍀 §e补给事件：§f中心圆盘掉下了一波随机物品。"
   lucky_pillars_event_thunder: "§x§F§F§D§D§5§5🍀 §6雷击事件：§f几根柱子被雷盯上了！"
@@ -235,11 +199,7 @@ game:
   block_party_win: "§x§D§D§8§8§F§F🏆 §d方块派对胜利者：§a{winner}"
   countdown_flash_direct: "§x§F§F§D§7§0§0⚡ §e闪光模式将在 §c{time} §e后直接开局！"
   countdown_end_flash_direct: "§x§B§B§8§8§F§F✦ §d终章 · 闪光将在 §c{time} §d后直接开局！"
-  independent_mode_started: "§x§8§8§D§D§F§F✦ §b该房间已按 §e独立模式 §b开局，不会再走猎物 / 猎人流程。"
-  brick_guard_map_selected: "§x§F§F§7§C§0§0▣ §e本局地图：§f{map} §7| §e伪边界半径：§f{radius}"
-  brick_guard_start: "§x§F§F§7§C§0§0▣ §e板砖守卫战开始！§f破坏对面的核心即可获胜。"
-  brick_guard_world_failed: "§x§F§F§5§5§5§5✘ §c板砖守卫战世界创建失败，已取消本局。"
-  brick_guard_fake_border_warning: "§x§F§F§8§8§5§5⚠ §c已到达本局伪边界，半径 §e{radius} §c格。"
+  independent_mode_started: "§x§8§8§D§D§F§F✦ §b该房间已按 §e专属玩法 §b开局，不会再走猎物 / 猎人流程。"
   started: "§x§8§8§D§D§F§F⏳ §b猎物已传送至游戏世界，§f等待猎物按下开始按钮..."
   started_auto: "§x§8§8§D§D§F§F⏳ §b玩家已传送至游戏世界，§f即将自动正式开始..."
   started_auto_end_flash: "§x§B§B§8§8§F§F✦ §d终章 · 闪光已传送至末地，§f即将自动正式开始..."
